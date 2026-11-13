@@ -1,0 +1,28 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: detect-private-key
+
+  # Local guard: warn loudly when a commit touches constitution or specs.
+  # These files should only change via /speckit-constitution or /speckit-specify.
+  - repo: local
+    hooks:
+      - id: guard-constitution
+        name: Guard .specify/memory/constitution.md
+        entry: bash -c 'if git diff --cached --name-only | grep -q "^.specify/memory/constitution.md$"; then echo "WARN: You are editing the constitution directly. Use /speckit-constitution instead. Confirm with --no-verify ONLY if intentional."; exit 1; fi'
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
+
+      - id: guard-specs
+        name: Guard specs/
+        entry: bash -c 'if git diff --cached --name-only | grep -qE "^specs/.*/spec\.md$"; then echo "WARN: You are editing a spec directly. Use /speckit-specify instead. Confirm with --no-verify ONLY if intentional."; exit 1; fi'
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]

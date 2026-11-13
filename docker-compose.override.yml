@@ -1,0 +1,16 @@
+# Dev-only overrides. docker compose automatically merges this with docker-compose.yml.
+# Enables hot reload by mounting source into the containers.
+
+services:
+  backend:
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./backend/app:/app/app
+      - ./data:/app/data
+
+  frontend:
+    command: pnpm dev
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next

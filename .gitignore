@@ -6,16 +6,31 @@
 # Python
 __pycache__/
 *.pyc
+*.pyo
 .venv/
 venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
 
-# Node
+# Node / Next.js
 node_modules/
 .next/
+out/
+*.tsbuildinfo
 
-# SQLite
+# SQLite / app data
 *.db
+*.db-journal
 data/*.db
+data/netracare.db
 
-# OS
+# IDE / OS
 .DS_Store
+.vscode/
+.idea/
+
+# Build
+dist/
+build/

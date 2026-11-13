@@ -1,0 +1,8 @@
+---
+description: NetraCare project rules (shim)
+alwaysApply: true
+---
+
+This is a shim. The source of truth is `docs/conventions.md`. Read it before generating or editing code.
+
+See `CLAUDE.md` for the full ruleset and protected-files list.

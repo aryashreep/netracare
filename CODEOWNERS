@@ -1,0 +1,20 @@
+# Protected files — require explicit reviewer approval.
+# Any AI-assisted change to these paths must be reviewed by a human.
+
+# Constitution and specs — only edit via /speckit-* commands.
+.specify/memory/constitution.md    @aryashreep
+specs/                             @aryashreep
+
+# Rules engine and slot computation — the backbone of booking correctness.
+backend/app/rules.py               @aryashreep
+backend/app/slots.py               @aryashreep
+
+# Project conventions — the source of truth that all AI shims point to.
+docs/conventions.md                @aryashreep
+
+# Governance files themselves.
+CLAUDE.md                          @aryashreep
+AGENTS.md                          @aryashreep
+.cursor/rules/                     @aryashreep
+CODEOWNERS                         @aryashreep
+.pre-commit-config.yaml            @aryashreep
