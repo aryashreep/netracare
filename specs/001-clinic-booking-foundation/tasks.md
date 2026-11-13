@@ -36,7 +36,7 @@ Web application. Backend at `backend/`, frontend at `frontend/`. See `plan.md` �
 - [X] **T002** [—] Create `backend/app/__init__.py` and empty `backend/app/main.py` with a FastAPI app placeholder so the Docker container has something to boot while Phase 2 runs.
 - [X] **T003** [P] [—] Create `frontend/package.json` with Next.js 14, React 18, TypeScript, Tailwind CSS 3, SWR; add scripts `dev`, `build`, `start`, `lint`. Create `frontend/tsconfig.json`, `frontend/next.config.mjs`, `frontend/tailwind.config.ts`, `frontend/postcss.config.mjs`, `frontend/app/globals.css`.
 - [X] **T004** [P] [—] Create `frontend/app/layout.tsx` and a stub `frontend/app/page.tsx` ("NetraCare — coming up") so `docker compose up` yields a running frontend immediately.
-- [ ] **T005** [—] Verify `docker compose build` succeeds for both services from a clean clone. If a Dockerfile step fails, fix only the `COPY`/`RUN` lines; do not restructure the Dockerfiles (they are already set up to no-op gracefully when deps files are absent).
+- [X] **T005** [—] Verify `docker compose build` succeeds for both services from a clean clone. If a Dockerfile step fails, fix only the `COPY`/`RUN` lines; do not restructure the Dockerfiles (they are already set up to no-op gracefully when deps files are absent).
 
 **Checkpoint:** `docker compose up --build` starts both services with placeholder pages. Phase 2 can begin.
 

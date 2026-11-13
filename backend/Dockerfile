@@ -9,9 +9,9 @@ WORKDIR /app
 # uv for fast, lockfile-based installs.
 RUN pip install --no-cache-dir uv
 
-# Install deps first for layer caching. pyproject.toml is created by /speckit-implement.
-COPY pyproject.toml* uv.lock* ./
-RUN if [ -f pyproject.toml ]; then uv sync --frozen || uv sync; fi
+# Install deps first for layer caching.
+COPY pyproject.toml ./
+RUN uv pip install --system -e '.[dev]'
 
 COPY app ./app
 
