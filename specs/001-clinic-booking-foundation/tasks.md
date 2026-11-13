@@ -204,8 +204,8 @@ any other doctor.
 **Purpose:** Documentation, CI hygiene, and the top-level `README.md` that the brief and
 LinkedIn post describe as the project's AI system design doc.
 
-- [ ] **T045** [—] Write the top-level `README.md` per the plan's §README section: 6-iteration map, ASCII architecture diagram, safety model, data-flow walkthrough, future-iteration hooks, running instructions, success metrics. Iter-1 marked ✅; Iter 2–6 marked planned.
-- [ ] **T046** [P] [—] Add `backend/README.md` and `frontend/README.md` with service-specific run instructions and the dependency list (for teammates not using Docker).
+- [X] **T045** [—] Write the top-level `README.md` per the plan's §README section: 6-iteration map, ASCII architecture diagram, safety model, data-flow walkthrough, future-iteration hooks, running instructions, success metrics. Iter-1 marked ✅; Iter 2–6 marked planned.
+- [X] **T046** [P] [—] Add `backend/README.md` and `frontend/README.md` with service-specific run instructions and the dependency list (for teammates not using Docker).
 - [ ] **T047** [P] [—] Install pre-commit hooks locally (`pre-commit install`) so the constitution + spec guards from `.pre-commit-config.yaml` actually fire. Document the step in `README.md` §Running it.
 - [ ] **T048** [—] Walk every row of `quickstart.md` end-to-end from a clean `docker compose up`. Record a 3-minute demo video (brief §10): one booking, one refusal (any of the 17), one staff cancellation.
 - [ ] **T049** [—] Open a PR from `iteration-1` to `main`. Fill `.github/pull_request_template.md` linking this spec. Tag `v1.0` on `main` after merge.
