@@ -160,14 +160,14 @@ counter, then cancel an appointment that starts in one hour. Both succeed.
 
 ### Backend
 
-- [ ] **T036** [US2] In `POST /appointments` (`routers/appointments.py`), activate the staff branch: if `actor.role == "staff"`, use `body.patient_id`; set `created_by_role="staff"`. Validate `patient_id` exists.
-- [ ] **T037** [US2] In `validate_cancel`, the staff branch already short-circuits the 2-hour check — add a backend test confirming staff can cancel inside 2 hours (`backend/tests/test_api_bookings.py::test_staff_cancels_inside_2h`).
-- [ ] **T038** [US2] Create `backend/app/routers/staff.py` with `GET /staff/appointments` (role=staff only) that returns all appointments with optional `doctor_id`/`date` filters. Mount in `main.py`.
+- [X] **T036** [US2] In `POST /appointments` (`routers/appointments.py`), activate the staff branch: if `actor.role == "staff"`, use `body.patient_id`; set `created_by_role="staff"`. Validate `patient_id` exists.
+- [X] **T037** [US2] In `validate_cancel`, the staff branch already short-circuits the 2-hour check — add a backend test confirming staff can cancel inside 2 hours (`backend/tests/test_api_bookings.py::test_staff_cancels_inside_2h`).
+- [X] **T038** [US2] Create `backend/app/routers/staff.py` with `GET /staff/appointments` (role=staff only) that returns all appointments with optional `doctor_id`/`date` filters. Mount in `main.py`.
 
 ### Frontend
 
-- [ ] **T039** [P] [US2] Build `frontend/app/staff/page.tsx` — table of all appointments. Filters: doctor dropdown, date picker, status. Each row has a Cancel button that works regardless of the 2-hour gap.
-- [ ] **T040** [US2] Build `frontend/app/staff/book/page.tsx` — same shape as patient Book page but with an extra Patient picker (searchable by mobile).
+- [X] **T039** [P] [US2] Build `frontend/app/staff/page.tsx` — table of all appointments. Filters: doctor dropdown, date picker, status. Each row has a Cancel button that works regardless of the 2-hour gap.
+- [X] **T040** [US2] Build `frontend/app/staff/book/page.tsx` — same shape as patient Book page but with an extra Patient picker (searchable by mobile).
 
 **Checkpoint:** Staff can perform all US-2 acceptance scenarios from the browser. Phase 3
 still passes.
@@ -187,13 +187,13 @@ any other doctor.
 
 ### Backend
 
-- [ ] **T041** [US3] Add `POST /appointments/{id}/complete` to `routers/appointments.py`: load appointment; refuse with `NOT_ACTIVE` if not `booked`; require `actor.role=="doctor"` and `actor.id==appointment.doctor_id` (else 403). Call `validate_complete` (returns None). Set status, save, return.
-- [ ] **T042** [US3] Add `backend/tests/test_api_bookings.py::test_follow_up_requires_completed_visit`: assert a follow-up with the right doctor after completion succeeds, and with a different doctor is refused with `FOLLOW_UP_DIFFERENT_DOCTOR`.
+- [X] **T041** [US3] Add `POST /appointments/{id}/complete` to `routers/appointments.py`: load appointment; refuse with `NOT_ACTIVE` if not `booked`; require `actor.role=="doctor"` and `actor.id==appointment.doctor_id` (else 403). Call `validate_complete` (returns None). Set status, save, return.
+- [X] **T042** [US3] Add `backend/tests/test_api_bookings.py::test_follow_up_requires_completed_visit`: assert a follow-up with the right doctor after completion succeeds, and with a different doctor is refused with `FOLLOW_UP_DIFFERENT_DOCTOR`.
 
 ### Frontend
 
-- [ ] **T043** [P] [US3] Build `frontend/app/doctor/page.tsx` — date picker and the day's schedule for the logged-in doctor. Each slot shows the patient name and start time.
-- [ ] **T044** [US3] Add the "Mark completed" button per slot in the doctor view; on success refetch the day's list. On 409 (`NOT_ACTIVE`) show the message inline.
+- [X] **T043** [P] [US3] Build `frontend/app/doctor/page.tsx` — date picker and the day's schedule for the logged-in doctor. Each slot shows the patient name and start time.
+- [X] **T044** [US3] Add the "Mark completed" button per slot in the doctor view; on success refetch the day's list. On 409 (`NOT_ACTIVE`) show the message inline.
 
 **Checkpoint:** All three user stories work end-to-end. Every §09 row still passes.
 
