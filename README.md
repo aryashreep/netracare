@@ -30,6 +30,23 @@ rules engine.
 | 5 | Evals + observability | RAGAS, offline + online evals, LangSmith / Opik traces. | 🔜 Planned |
 | 6 | Voice + MCP | Multimodal / voice front door. MCP server re-exports the booking APIs for partner agents. | 🔜 Planned |
 
+```mermaid
+flowchart LR
+    I1["<b>Iter 1 ✅</b><br/>Booking foundation<br/>FastAPI · rules.py · 17 codes"]
+    I2["<b>Iter 2</b><br/>First LLM<br/>Fact of the Day<br/>Red-flag check"]
+    I3["<b>Iter 3</b><br/>Patient chat (RAG)<br/>BM25 + vector<br/>citations · I-don't-know"]
+    I4["<b>Iter 4</b><br/>Agent (LangGraph)<br/>uses Iter-1 API as tools"]
+    I5["<b>Iter 5</b><br/>Evals + observability<br/>RAGAS · LangSmith · Opik"]
+    I6["<b>Iter 6</b><br/>Voice + MCP server<br/>partner-app access"]
+
+    I1 ==> I2 ==> I3 ==> I4 ==> I5 ==> I6
+
+    classDef done fill:#e2f1f2,stroke:#0d6e7a,stroke-width:2px;
+    classDef todo stroke-dasharray:5 5,color:#55636e;
+    class I1 done;
+    class I2,I3,I4,I5,I6 todo;
+```
+
 Project brief: see the four HTML handouts in the user's course folder
 (`NetraCare-Capstone-Brief.html` plus `Iteration-{1,2,3}.html`). The
 feature spec for the current iteration lives at
@@ -39,45 +56,55 @@ feature spec for the current iteration lives at
 
 ## 2. Architecture (the whole system, dashed where not built yet)
 
-```
-                                                  ┌──────────────────────────────────┐
-                                                  │        Browser (Next.js 14)      │
-                                                  │  /         /patient    /staff    │
-                                                  │  /doctor   /patient/book  …      │
-                                                  └───────────────┬──────────────────┘
-                                                                  │ HTTPS (JSON)
-                                                                  ▼
-       ┌─────────────────────────────── FastAPI service (Python 3.11) ──────────────────────────────┐
-       │                                                                                            │
-       │   routers/      ┌────────── auth ───────────┐  ┌───────── rules.py (PURE) ──────────┐      │
-       │   auth.py       │  in-memory bearer tokens  │  │  validate_booking (17 reason codes) │      │
-       │   doctors.py    │  current_actor()          │  │  validate_cancel   validate_complete│      │
-       │   slots.py      └───────────────────────────┘  └────────────────┬────────────────────┘      │
-       │   appointments.py                                               │                          │
-       │        │                                                        ▼                          │
-       │        │                                                 ┌──────────────┐                  │
-       │        └────────────────────────────────────────────────▶│  SQLModel    │◀─ loader.py      │
-       │                                                         │  on SQLite   │   (seeds CSVs)    │
-       │                                                         └──────────────┘                   │
-       │                                                                                            │
-       │   clock.py — honors CLINIC_NOW (fixed-clock harness)                                      │
-       │                                                                                            │
-       │   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄ future iterations ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐      │
-       │   ┊  llm/   (Iter 2: red-flag check runs BEFORE validate_booking)                 ┊      │
-       │   ┊  rag/   (Iter 3: hybrid search over clinic docs, serves POST /chat)           ┊      │
-       │   ┊  agent/ (Iter 4: LangGraph, wraps the above routers as tools)                 ┊      │
-       │   ┊  evals/ (Iter 5: RAGAS harness, traces, dashboards)                           ┊      │
-       │   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘      │
-       │                                                                                            │
-       └────────────────────────────────────────────────┬───────────────────────────────────────────┘
-                                                       │
-                              ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┼┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐
-                              ┊                        ▼                          ┊
-                              ┊     ┌────────────┐   ┌────────────┐   ┌─────────────┐
-                              ┊     │  chromadb  │   │  langfuse  │   │ mcp-server  │
-                              ┊     │  (Iter 3)  │   │  (Iter 5)  │   │  (Iter 6)   │
-                              ┊     └────────────┘   └────────────┘   └─────────────┘
-                              └┄┄┄┄┄ commented in docker-compose.yml, uncomment per iteration ┄┄┄┄┘
+```mermaid
+flowchart TB
+    Browser["Browser (Next.js 14)<br/>/ · /patient · /patient/book<br/>/staff · /staff/book · /doctor"]
+
+    subgraph FastAPI["FastAPI service — Python 3.11"]
+        direction TB
+        Auth["routers/auth.py<br/>in-memory bearer tokens<br/>current_actor()"]
+        Routers["routers/<br/>doctors · slots · appointments"]
+        Rules{{"rules.py (PURE)<br/>validate_booking<br/>validate_cancel<br/>validate_complete<br/>17 reason codes"}}
+        Slots{{"slots.py (PURE)<br/>free_slots()"}}
+        Clock["clock.py<br/>honors CLINIC_NOW"]
+        Loader["loader.py<br/>seeds CSVs idempotently"]
+        DB[("SQLModel on SQLite<br/>5 tables · ~60 rows seed")]
+    end
+
+    Browser -->|HTTPS JSON<br/>Bearer token| Auth
+    Browser -->|HTTPS JSON| Routers
+    Routers --> Rules
+    Routers --> Slots
+    Rules --> DB
+    Slots --> DB
+    Loader --> DB
+    Rules -.reads now from.-> Clock
+    Slots -.reads now from.-> Clock
+
+    subgraph Future["Future iterations — dashed = not built yet"]
+        direction LR
+        LLM["llm/<br/>Iter 2<br/>red-flag check<br/>BEFORE validate_booking"]
+        RAG["rag/<br/>Iter 3<br/>hybrid search<br/>POST /chat"]
+        Agent["agent/<br/>Iter 4<br/>LangGraph wrapping<br/>the Iter-1 routers"]
+        Evals["evals/<br/>Iter 5<br/>RAGAS · traces"]
+    end
+    LLM -.-> Routers
+    RAG -.-> Routers
+    Agent -.-> Routers
+    Evals -.observes.-> Routers
+
+    subgraph Compose["docker-compose services (dashed = commented)"]
+        direction LR
+        Chroma["chromadb<br/>Iter 3"]
+        Lang["langfuse<br/>Iter 5"]
+        MCP["mcp-server<br/>Iter 6"]
+    end
+    RAG -.-> Chroma
+    Evals -.-> Lang
+    Agent -.-> MCP
+
+    classDef future stroke-dasharray:5 5,color:#55636e;
+    class LLM,RAG,Agent,Evals,Chroma,Lang,MCP future;
 ```
 
 **The invariant that stays the same across all 6 iterations:** `rules.py`
@@ -112,10 +139,28 @@ Changes to that file require `/speckit-constitution` and a version bump.
 Next.js posts `/appointments` → FastAPI → `rules.validate_booking()` →
 409 with one of the 17 reason codes, **or** insert row + 201.
 
-```
-Patient (browser) ─► Next.js ─► POST /appointments ─► rules.py ─► SQLite
-                                        │
-                                        └──► 409 { code, message }
+```mermaid
+sequenceDiagram
+    autonumber
+    actor P as Patient
+    participant UI as Next.js UI
+    participant API as FastAPI router
+    participant R as rules.py (pure)
+    participant DB as SQLite
+
+    P->>UI: Clicks "Confirm booking"
+    UI->>API: POST /appointments<br/>Bearer token
+    API->>R: validate_booking(now, session, ...)
+    alt rule violated
+        R-->>API: raise RuleError(code, message)
+        API-->>UI: 409 { code, message }
+        UI-->>P: Shows refusal inline
+    else all 17 checks pass
+        R-->>API: returns end_ts
+        API->>DB: INSERT appointment
+        API-->>UI: 201 { id, start_ts, end_ts, ... }
+        UI-->>P: Shows booking confirmation
+    end
 ```
 
 **Iteration 4 (planned):** Patient types "book me with Dr. Rao tomorrow
@@ -123,16 +168,66 @@ Patient (browser) ─► Next.js ─► POST /appointments ─► rules.py ─�
 `POST /appointments` → **same rules engine** rejects or accepts. The
 agent itself has no business-rule logic.
 
+```mermaid
+sequenceDiagram
+    autonumber
+    actor P as Patient
+    participant Chat as Chat UI
+    participant Agent as LangGraph agent
+    participant RedFlag as llm.red_flags (Iter 2)
+    participant API as FastAPI (same routers)
+    participant R as rules.py (same engine)
+    participant DB as SQLite
+
+    P->>Chat: "Book Dr. Rao tomorrow 10 AM"
+    Chat->>Agent: natural language
+    Agent->>RedFlag: check_red_flags(message)
+    alt red flag
+        RedFlag-->>Agent: emergency response
+        Agent-->>Chat: urgent response, no booking
+    else safe
+        Agent->>API: GET /slots?doctor_id=D1&date=...
+        API->>DB: query
+        API-->>Agent: available slots
+        Agent->>API: POST /appointments (same payload as today)
+        API->>R: validate_booking (SAME engine)
+        R-->>API: ok OR RuleError
+        API-->>Agent: 201 or 409
+        Agent-->>Chat: "Booked for 10:00" or refusal
+    end
 ```
-Patient (chat) ─► Agent ─► POST /appointments ─► rules.py ─► SQLite
-                     │               ▲
-                     │               │
-                     └── also calls /slots to search availability
-```
+
+**The point:** the agent is just another HTTP client. It calls the same
+endpoints the browser calls. Zero rule logic in the agent.
 
 This is why the rules engine is pure and takes `now` as a parameter: the
 agent might ask it to validate a hypothetical slot without ever inserting
 a row.
+
+### Appointment lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> booked : POST /appointments<br/>(validate_booking)
+    booked --> cancelled : POST /appointments/{id}/cancel<br/>(patient ≥2h OR staff)
+    booked --> completed : POST /appointments/{id}/complete<br/>(assigned doctor only)
+    cancelled --> [*]
+    completed --> [*]
+
+    note right of booked
+        validate_cancel refuses with
+        INSIDE_2_HOURS (patient, <2h)
+        NOT_YOUR_APPOINTMENT (wrong patient)
+    end note
+    note right of cancelled
+        NOT_ACTIVE if cancelled again
+        or marked completed
+    end note
+```
+
+Follow-up unlocks after `completed`: a patient can book a `follow_up`
+visit for the same `(doctor, speciality)` as their last completed one,
+but **not with a different doctor** (`FOLLOW_UP_DIFFERENT_DOCTOR`).
 
 ---
 
