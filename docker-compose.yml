@@ -1,0 +1,61 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: netracare-backend
+    env_file: .env
+    environment:
+      - DATABASE_URL=sqlite:////app/data/netracare.db
+      - DATA_DIR=/app/data/data-pack-01
+    volumes:
+      - ./data:/app/data
+    ports:
+      - "8000:8000"
+    networks:
+      - netracare
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: netracare-frontend
+    env_file: .env
+    environment:
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - netracare
+
+  # Reserved for later iterations — uncomment when the iteration adds them.
+  #
+  # chromadb:          # Iteration 3 — RAG vector store
+  #   image: chromadb/chroma:latest
+  #   volumes:
+  #     - ./data/chroma:/chroma/chroma
+  #   ports:
+  #     - "8001:8000"
+  #   networks:
+  #     - netracare
+  #
+  # langfuse:          # Iteration 5 — LLM observability
+  #   image: langfuse/langfuse:latest
+  #   ports:
+  #     - "3100:3000"
+  #   networks:
+  #     - netracare
+  #
+  # mcp-server:        # Iteration 6 — partner app access
+  #   build:
+  #     context: ./mcp_server
+  #   ports:
+  #     - "8200:8200"
+  #   networks:
+  #     - netracare
+
+networks:
+  netracare:
+    driver: bridge
