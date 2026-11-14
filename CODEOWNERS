@@ -18,3 +18,8 @@ AGENTS.md                          @aryashreep
 .cursor/rules/                     @aryashreep
 CODEOWNERS                         @aryashreep
 .pre-commit-config.yaml            @aryashreep
+
+# Swarm agent definitions and workflow — changing an agent's scope or
+# prompt affects every future iteration's execution. Human review required.
+.claude/agents/                    @aryashreep
+docs/swarm-workflow.md             @aryashreep

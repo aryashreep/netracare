@@ -36,3 +36,9 @@ Never edit these without the matching slash command:
 ## Knowledge-graph discipline
 
 Before writing non-trivial code, check `docs/conventions.md` and the current `specs/` folder for existing contracts. Do not reinvent utilities that already exist.
+
+## Swarm
+
+If you are invoked as a specialist subagent (one of the files in `.claude/agents/`), read your own agent file first AND `docs/swarm-workflow.md` AND `docs/conventions.md` before touching any file. Stay strictly inside the write scope declared in your agent file. If a task requires touching another agent's scope, STOP and request a handoff.
+
+For humans or top-level Claude Code sessions: use the swarm by invoking subagents via the Agent tool (`subagent_type: orchestrator | spec | architect | backend | frontend | security | qa | integration | review`). Dispatch flow is in `docs/swarm-workflow.md` §2.
