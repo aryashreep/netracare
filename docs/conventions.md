@@ -90,3 +90,17 @@ Set `CLINIC_NOW=2026-11-02T10:00:00` in `.env` to run the stretch-goal `rule_tes
 ## 9. Secrets
 
 API keys live in `.env` only. `.env.example` is committed; `.env` is git-ignored. Never paste keys into code, specs, or PR descriptions.
+
+## 10. Swarm conventions
+
+From Iteration 2 onward, feature work is built by a **build-time agent swarm** — 9 specialist subagents coordinated by a human orchestrator. The full execution model is in `docs/swarm-workflow.md`.
+
+**Short version:**
+
+- Agents live in `.claude/agents/<name>.md`. Nine roles: `orchestrator`, `spec`, `architect`, `backend`, `frontend`, `security`, `qa`, `integration`, `review`.
+- Every unit of work is a **task card** (template in `docs/swarm-workflow.md` §3). Cards are appended to `docs/swarm/task-log.md`.
+- **One task, one owner agent.** No concurrent edits on the same file across tasks.
+- Parallel tasks run in isolated git worktrees via `scripts/worktree.sh` (`new` / `clean` / `list`). Worktrees land at `../netracare-wt/<slug>`.
+- Agents MUST stay inside their declared write scope. Protected files (`rules.py`, `slots.py`, `constitution.md`, `specs/**/spec.md`, this file) require explicit human invocation and are enforced by `CODEOWNERS` + pre-commit.
+- Every agent's final message is a structured handoff block: files changed, tests run, limitations, next agent.
+- Specs remain the contract. No `/speckit-implement` without `/speckit-specify` → `/speckit-plan` → `/speckit-tasks` first.
