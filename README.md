@@ -337,7 +337,127 @@ implementation are rejected per the constitution.
 
 ---
 
-## 9. Running it
+## 9. Build-time agent swarm
+
+From Iteration 2 onward, feature work is built by a **9-agent swarm**
+layered on top of spec-kit. Each agent is a Claude Code subagent with
+a narrow tool grant and a prompt that references the constitution,
+`docs/conventions.md`, and the shared workflow document. The agents
+coordinate through task cards; the implementation surface is split so
+no two agents ever edit the same file at the same time.
+
+> **This is a dev-workflow layer, not a NetraCare runtime feature.**
+> The shipped product keeps the brief's single-agent Iter-4 plan. What
+> the swarm changes is *who writes the code* for each future iteration.
+
+### The agents and their write scope
+
+| Agent | Role | Write scope |
+|---|---|---|
+| `orchestrator` | Decomposes a feature into owner-tagged task cards | — (text only) |
+| `spec` | WHAT and WHY — user stories, FRs, success criteria | `specs/**/spec.md`, `checklists/` |
+| `architect` | HOW — plan, data model, contracts, research | `plan.md`, `research.md`, `data-model.md`, `contracts/`, `tasks.md`, `quickstart.md` |
+| `backend` | API, business logic, LLM modules, loaders | `backend/app/**` (except `rules.py`/`slots.py`) |
+| `frontend` | Next.js pages and client | `frontend/**` |
+| `security` | PHI, auth, secrets, dependency audit | — (review-only) |
+| `qa` | Tests against the spec's Acceptance Scenarios | `backend/tests/**`, `frontend/tests/**` |
+| `integration` | Docker, env, cross-service wiring | `docker-compose*.yml`, Dockerfiles, `.env.example` |
+| `review` | Final pre-PR sweep | — (review-only) |
+
+Agent files live in `.claude/agents/<name>.md`. Protected files
+(`rules.py`, `slots.py`, constitution, specs, this list of agent
+definitions) stay under `CODEOWNERS` + pre-commit regardless of which
+agent is on the keyboard.
+
+### Execution flow for a feature
+
+```mermaid
+flowchart TB
+    Human["🧑 Human<br/>defines the feature"]
+    Orc["orchestrator<br/>→ task cards<br/>in docs/swarm/task-log.md"]
+    Spec["spec<br/>spec.md + checklists"]
+    Arch["architect<br/>plan · research · contracts · tasks"]
+
+    subgraph Impl["Implementation (parallel, in isolated worktrees)"]
+        direction LR
+        BE["backend"]
+        FE["frontend"]
+        INT["integration"]
+    end
+
+    QA["qa<br/>tests cover every FR"]
+    Sec["security<br/>PHI · auth · secrets · deps"]
+    Rev["review<br/>spec drift · docs · hygiene"]
+    PR["🔀 Human opens PR<br/>CODEOWNERS gate on protected files"]
+
+    Human --> Orc --> Spec --> Arch --> Impl
+    Impl --> QA
+    Impl --> Sec
+    QA --> Rev
+    Sec --> Rev
+    Rev --> PR
+
+    classDef agent fill:#e2f1f2,stroke:#0d6e7a;
+    classDef human fill:#fdf6e3,stroke:#b58900;
+    class Orc,Spec,Arch,BE,FE,INT,QA,Sec,Rev agent;
+    class Human,PR human;
+```
+
+### How a task gets picked up
+
+Every unit of work is a **task card** (template in
+`docs/swarm-workflow.md` §3). Cards are appended to
+`docs/swarm/task-log.md` as an append-only index. A valid card names:
+
+- Iteration and owner agent
+- Spec reference (e.g. `specs/002-.../spec.md FR-R4`)
+- Write scope and dependencies
+- Concrete, testable acceptance conditions
+- Known risks and the next agent to hand off to
+
+Owner agents refuse incomplete cards.
+
+### Worktrees for parallel work
+
+Tasks that don't share files run in parallel in isolated git
+worktrees:
+
+```bash
+# per-task isolated workspace at ../netracare-wt/<slug>
+scripts/worktree.sh new red-flag-check
+cd ../netracare-wt/red-flag-check
+# ... implement, commit, PR, merge ...
+scripts/worktree.sh clean red-flag-check
+```
+
+The script refuses to clean a worktree that still has uncommitted
+changes. Worktree branches land in the iteration branch via PR, not
+directly into `main`.
+
+### Design rules (all enforced in prompt + tool scope + CODEOWNERS)
+
+- One task, one owner agent.
+- No concurrent edits on the same file across tasks.
+- Shared spec, isolated implementation.
+- No agent bypasses safety or governance rules.
+- Every agent reports back: files changed, tests run, limitations,
+  next agent.
+
+### Promotion path for the orchestrator
+
+For now, the `orchestrator` subagent is invoked by a human to produce
+task cards; the human still dispatches each card. Promoting the
+orchestrator to autonomous dispatch is a future iteration: we'll do it
+only after the task-card template has stabilised across two iterations
+and we have handoff metrics (success / rework / blocked rates) worth
+feeding to an autonomous agent.
+
+Full execution model, task-card format, and failure-mode playbook:
+`docs/swarm-workflow.md`.
+
+---
+
+## 10. Running it
 
 ### Prerequisites
 
@@ -406,7 +526,7 @@ CLINIC_NOW=2026-11-02T10:00:00 docker compose exec backend pytest tests/test_rul
 
 ---
 
-## 10. Success metrics across the 6 iterations
+## 11. Success metrics across the 6 iterations
 
 The brief §09 lists five hard targets. Each is earned by one iteration:
 
@@ -420,34 +540,42 @@ The brief §09 lists five hard targets. Each is earned by one iteration:
 
 ---
 
-## 11. Repository structure (high level)
+## 12. Repository structure (high level)
 
 ```
 .
-├── .specify/            # spec-kit framework + constitution
-├── .claude/skills/      # spec-kit slash commands (/speckit-*)
-├── .cursor/rules/       # Cursor rule shim → docs/conventions.md
-├── CLAUDE.md            # Claude Code rule shim → docs/conventions.md
-├── AGENTS.md            # Tool-agnostic shim → docs/conventions.md
-├── docs/conventions.md  # SOURCE OF TRUTH for AI tools
-├── docker-compose.yml   # backend + frontend (future services commented)
-├── backend/             # FastAPI + SQLModel service
+├── .specify/              # spec-kit framework + constitution
+├── .claude/
+│   ├── skills/            # spec-kit slash commands (/speckit-*)
+│   └── agents/            # 9 swarm subagents (orchestrator, spec, ...)
+├── .cursor/rules/         # Cursor rule shim → docs/conventions.md
+├── CLAUDE.md              # Claude Code rule shim → docs/conventions.md
+├── AGENTS.md              # Tool-agnostic shim → docs/conventions.md
+├── CODEOWNERS             # protected files (rules.py, specs, agents, …)
+├── docs/
+│   ├── conventions.md     # SOURCE OF TRUTH for AI tools
+│   ├── swarm-workflow.md  # swarm execution model + task-card format
+│   └── swarm/task-log.md  # append-only task-card audit index
+├── scripts/
+│   └── worktree.sh        # per-task isolated worktrees (new/clean/list)
+├── docker-compose.yml     # backend + frontend (future services commented)
+├── backend/               # FastAPI + SQLModel service
 │   ├── app/
-│   │   ├── rules.py     # ⚠ sole booking authority (CODEOWNERS)
-│   │   ├── slots.py     # ⚠ pure (CODEOWNERS)
-│   │   ├── clock.py     # honors CLINIC_NOW
-│   │   ├── auth.py      # classroom bearer tokens
-│   │   ├── loader.py    # CSV seed (idempotent)
+│   │   ├── rules.py       # ⚠ sole booking authority (CODEOWNERS)
+│   │   ├── slots.py       # ⚠ pure (CODEOWNERS)
+│   │   ├── clock.py       # honors CLINIC_NOW
+│   │   ├── auth.py        # classroom bearer tokens
+│   │   ├── loader.py      # CSV seed (idempotent)
 │   │   └── routers/
-│   └── tests/           # 37 passing, 1 stretch skipped
-├── frontend/            # Next.js 14 (App Router) + TypeScript + Tailwind
+│   └── tests/             # 37 passing, 1 stretch skipped
+├── frontend/              # Next.js 14 (App Router) + TypeScript + Tailwind
 │   ├── app/
-│   │   ├── page.tsx     # role picker login
-│   │   ├── patient/     # dashboard + book
-│   │   ├── staff/       # all appointments + walk-in
-│   │   └── doctor/      # day schedule + mark completed
-│   └── lib/             # typed API client
-├── data/data-pack-01/   # the authoritative data pack
+│   │   ├── page.tsx       # role picker login
+│   │   ├── patient/       # dashboard + book
+│   │   ├── staff/         # all appointments + walk-in
+│   │   └── doctor/        # day schedule + mark completed
+│   └── lib/               # typed API client
+├── data/data-pack-01/     # the authoritative data pack
 └── specs/001-clinic-booking-foundation/   # this iteration's spec-kit artifacts
 ```
 
@@ -456,7 +584,7 @@ Files under `CODEOWNERS` (constitution, specs, `rules.py`, `slots.py`,
 
 ---
 
-## 12. Credits and scope
+## 13. Credits and scope
 
 - Course: *Agentic AI* capstone.
 - Built in public — see the author's LinkedIn for the ongoing writeup.
