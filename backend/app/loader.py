@@ -4,13 +4,20 @@ Called once at application startup via the main.py lifespan.
 """
 
 import csv
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 from sqlmodel import Session, select
 
 from app.config import settings
-from app.models import Doctor, Holiday, Patient, WeeklyScheduleEntry
+from app.models import (
+    Appointment,
+    Doctor,
+    Holiday,
+    Patient,
+    PatientProfile,
+    WeeklyScheduleEntry,
+)
 
 _WEEKDAY: dict[str, int] = {"Mon": 0, "Tue": 1, "Wed": 2, "Thu": 3, "Fri": 4, "Sat": 5}
 
@@ -62,6 +69,46 @@ def seed(session: Session) -> dict[str, int]:
                 Patient(id=r["patient_id"], mobile=r["mobile"], name=r["name"], year_of_birth=yob)
             )
         counts["patients"] = len(rows)
+
+    # --- Data pack 2 (Iter 2): patient profiles and past completed visits ---
+    data_dir_02 = Path(settings.data_dir_02)
+    if data_dir_02.exists():
+        if not session.exec(select(PatientProfile)).first():
+            rows = _read(data_dir_02 / "patient_profiles.csv")
+            for r in rows:
+                session.add(
+                    PatientProfile(
+                        patient_id=r["patient_id"],
+                        general_health=r["general_health"],
+                        allergies=r["allergies"],
+                    )
+                )
+            counts["profiles"] = len(rows)
+
+        # Past visits are seeded as completed appointments. The follow-up rule in
+        # rules.py reads Appointment.status == "completed" with no awareness of
+        # whether the row was seeded or booked through the API.
+        if not session.exec(select(Appointment)).first():
+            rows = _read(data_dir_02 / "past_visits.csv")
+            for r in rows:
+                start = datetime.fromisoformat(f"{r['date']}T{r['start_time']}:00")
+                end = datetime.fromisoformat(f"{r['date']}T{r['end_time']}:00")
+                session.add(
+                    Appointment(
+                        patient_id=r["patient_id"],
+                        doctor_id=r["doctor_id"],
+                        speciality=r["speciality"],
+                        visit_type=r["visit_type"],
+                        start_ts=start,
+                        end_ts=end,
+                        status="completed",
+                        created_by_role="staff",
+                        created_at=start,
+                        reason=r["reason"],
+                        doctor_note=r["doctor_note"],
+                    )
+                )
+            counts["past_visits"] = len(rows)
 
     session.commit()
     return counts

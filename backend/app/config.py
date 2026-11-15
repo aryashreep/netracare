@@ -10,10 +10,19 @@ class Settings(BaseSettings):
     # Local dev or tests override via DATABASE_URL env var (tests use sqlite://).
     database_url: str = "postgresql+psycopg://netracare:netracare@postgres:5432/netracare"
     data_dir: str = "/app/data/data-pack-01"
+    data_dir_02: str = "/app/data/data-pack-02"
     clinic_now: str | None = None
 
+    # LLM (Iter 2)
     anthropic_api_key: str | None = None
-    anthropic_model: str = "claude-sonnet-4-6"
+    llm_provider: str = "anthropic"
+    llm_model_fast: str = "claude-haiku-4-5-20251001"
+    llm_model_quality: str = "claude-sonnet-4-6"
+    llm_timeout_fast: float = 5.0
+    llm_timeout_quality: float = 8.0
+    llm_max_tokens_red_flag: int = 2000
+    llm_max_tokens_fact: int = 3000
+    llm_max_tokens_summary: int = 4000
 
     def frozen_now(self) -> datetime | None:
         return datetime.fromisoformat(self.clinic_now) if self.clinic_now else None
