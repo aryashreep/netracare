@@ -23,7 +23,7 @@ rules engine.
 
 | # | Iteration | What it adds | Status |
 |---|---|---|---|
-| 1 | **Booking foundation** | FastAPI + SQLite + Next.js. Three roles, 17-code rules engine, slot computation. **No AI.** | ✅ Built on this branch |
+| 1 | **Booking foundation** | FastAPI + Postgres (pgvector-ready) + Next.js. Three roles, 17-code rules engine, slot computation. **No AI.** | ✅ Built on this branch |
 | 2 | First LLM features | Fact of the Day, **red-flag check** on every booking, doctor summaries. LangChain basics. | 🔜 Planned |
 | 3 | Patient chat (RAG) | Clinic knowledge base with hybrid search (BM25 + vector), citations, "I don't know", speciality routing. | 🔜 Planned |
 | 4 | Agent | LangGraph agent that books, cancels, reschedules using the Iter-1 API as tools. Doctor-leave handling. | 🔜 Planned |
@@ -68,7 +68,7 @@ flowchart TB
         Slots{{"slots.py (PURE)<br/>free_slots()"}}
         Clock["clock.py<br/>honors CLINIC_NOW"]
         Loader["loader.py<br/>seeds CSVs idempotently"]
-        DB[("SQLModel on SQLite<br/>5 tables · ~60 rows seed")]
+        DB[("SQLModel on Postgres 16<br/>pgvector pre-staged<br/>5 tables · ~60 rows seed")]
     end
 
     Browser -->|HTTPS JSON<br/>Bearer token| Auth
@@ -95,16 +95,15 @@ flowchart TB
 
     subgraph Compose["docker-compose services (dashed = commented)"]
         direction LR
-        Chroma["chromadb<br/>Iter 3"]
         Lang["langfuse<br/>Iter 5"]
         MCP["mcp-server<br/>Iter 6"]
     end
-    RAG -.-> Chroma
+    RAG -.CREATE EXTENSION vector.-> DB
     Evals -.-> Lang
     Agent -.-> MCP
 
     classDef future stroke-dasharray:5 5,color:#55636e;
-    class LLM,RAG,Agent,Evals,Chroma,Lang,MCP future;
+    class LLM,RAG,Agent,Evals,Lang,MCP future;
 ```
 
 **The invariant that stays the same across all 6 iterations:** `rules.py`
@@ -146,7 +145,7 @@ sequenceDiagram
     participant UI as Next.js UI
     participant API as FastAPI router
     participant R as rules.py (pure)
-    participant DB as SQLite
+    participant DB as Postgres
 
     P->>UI: Clicks "Confirm booking"
     UI->>API: POST /appointments<br/>Bearer token
@@ -177,7 +176,7 @@ sequenceDiagram
     participant RedFlag as llm.red_flags (Iter 2)
     participant API as FastAPI (same routers)
     participant R as rules.py (same engine)
-    participant DB as SQLite
+    participant DB as Postgres
 
     P->>Chat: "Book Dr. Rao tomorrow 10 AM"
     Chat->>Agent: natural language
@@ -292,8 +291,10 @@ it. These are the contracts:
 - **Iter 3 — `backend/app/rag/`** — exposes `POST /chat`. The chain runs
   `check_red_flags` (reuse Iter 2) on every patient message, then
   rewrite → hybrid search → answer-or-"I-don't-know". Chunks live in a
-  Chroma volume (uncomment the `chromadb` service in
-  `docker-compose.yml`).
+  `pgvector` column on Postgres (extension already pre-staged in the
+  image — just `CREATE EXTENSION vector;` and add an embedding column).
+  Hybrid search uses Postgres's `tsvector` for BM25 alongside pgvector,
+  in one SQL query.
 - **Iter 4 — `backend/app/agent/`** — a LangGraph agent whose **tools are
   the Iter-1 endpoints**. The agent never re-implements rules.
 - **Iter 5 — `evals/`** — a RAGAS + rule-coverage harness run against

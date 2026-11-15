@@ -52,6 +52,31 @@ multi-day development).
 concurrency tests. Switch to Postgres then if SQLite's single-writer lock becomes a
 bottleneck.
 
+### D3 — OVERRIDE (pre-Iter-2 chore, 2026-11-15)
+
+Per instructor guidance, switched to **Postgres 16 with the pgvector extension pre-staged**
+(`pgvector/pgvector:pg16` image). The trigger moved forward — not because Iter-1 needed
+it, but because:
+
+- Iter 3 would otherwise ship both a new DB service AND a new vector service in the same
+  PR. Doing Postgres now means Iter 3 is a 1-line `CREATE EXTENSION vector;` + embedding
+  column, no new infra.
+- One transaction model across relational + vector. Deleting a patient atomically
+  removes their appointments *and* their embeddings in Iter 3+.
+- Postgres has `tsvector` built in, so Iter 3's hybrid-search (BM25 + vector) can be done
+  in a single SQL query without `rank_bm25` or `EnsembleRetriever` glue.
+- Production-realistic infra signal for the capstone grading.
+
+Connection string moved to `postgresql+psycopg://...`. Sync `psycopg[binary]` added to
+backend deps (keeps our existing FastAPI sync pattern; async is a separate migration).
+`SQLModel.metadata.create_all` still handles schema; Alembic deferred until we have
+live-data migrations.
+
+Test fixtures continue to use in-memory SQLite (`sqlite://`) through SQLModel — this
+proves `rules.py` and `slots.py` remain DB-agnostic. End-to-end verification against
+the running Postgres container passed: the 13-row refusal matrix behaves identically,
+appointment rows persist with `TIMESTAMP WITHOUT TIME ZONE` on Postgres.
+
 ## D4. Frontend: Next.js 14 (App Router) + TypeScript + Tailwind
 
 **Decision:** Next.js 14 with the App Router, TypeScript, Tailwind for styling, and SWR
@@ -120,6 +145,10 @@ real third party integration.
 **Decision:** `docker compose up` is the canonical dev command. Two services in
 `docker-compose.yml` for Iter 1 (backend, frontend); commented placeholders reserved for
 `chromadb` (Iter 3), `langfuse` (Iter 5), and `mcp-server` (Iter 6).
+
+> **Superseded by D3 override** (2026-11-15): three services ship from Iter 1
+> (`postgres`, `backend`, `frontend`), and `chromadb` is no longer needed —
+> `pgvector` is pre-staged inside the `postgres` service.
 
 **Rationale:**
 - Constitution Principle V. One command, same on every machine.

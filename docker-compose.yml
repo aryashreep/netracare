@@ -1,4 +1,23 @@
 services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: netracare-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-netracare}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-netracare}
+      POSTGRES_DB: ${POSTGRES_DB:-netracare}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-netracare} -d ${POSTGRES_DB:-netracare}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - netracare
+
   backend:
     build:
       context: ./backend
@@ -6,12 +25,15 @@ services:
     container_name: netracare-backend
     env_file: .env
     environment:
-      - DATABASE_URL=sqlite:////app/data/netracare.db
+      - DATABASE_URL=postgresql+psycopg://${POSTGRES_USER:-netracare}:${POSTGRES_PASSWORD:-netracare}@postgres:5432/${POSTGRES_DB:-netracare}
       - DATA_DIR=/app/data/data-pack-01
     volumes:
       - ./data:/app/data
     ports:
       - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - netracare
 
@@ -32,14 +54,9 @@ services:
 
   # Reserved for later iterations — uncomment when the iteration adds them.
   #
-  # chromadb:          # Iteration 3 — RAG vector store
-  #   image: chromadb/chroma:latest
-  #   volumes:
-  #     - ./data/chroma:/chroma/chroma
-  #   ports:
-  #     - "8001:8000"
-  #   networks:
-  #     - netracare
+  # pgvector support is already shipped above (Postgres image is
+  # pgvector/pgvector:pg16). Iter 3 just needs: CREATE EXTENSION vector;
+  # and embedding columns. No new service required.
   #
   # langfuse:          # Iteration 5 — LLM observability
   #   image: langfuse/langfuse:latest
@@ -55,6 +72,9 @@ services:
   #     - "8200:8200"
   #   networks:
   #     - netracare
+
+volumes:
+  postgres-data:
 
 networks:
   netracare:

@@ -6,7 +6,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-    database_url: str = "sqlite:////app/data/netracare.db"
+    # Default assumes Docker Compose where host "postgres" resolves on the netracare network.
+    # Local dev or tests override via DATABASE_URL env var (tests use sqlite://).
+    database_url: str = "postgresql+psycopg://netracare:netracare@postgres:5432/netracare"
     data_dir: str = "/app/data/data-pack-01"
     clinic_now: str | None = None
 
