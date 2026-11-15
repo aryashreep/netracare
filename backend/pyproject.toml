@@ -11,6 +11,9 @@ dependencies = [
     "pydantic-settings>=2.6",
     "python-multipart>=0.0.12",
     "psycopg[binary]>=3.2",
+    "langchain>=0.3",
+    "langchain-core>=0.3",
+    "langchain-anthropic>=0.3",
 ]
 
 [project.optional-dependencies]

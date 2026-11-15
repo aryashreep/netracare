@@ -55,3 +55,25 @@ class Appointment(SQLModel, table=True):
     status: str = Field(default="booked", index=True)  # "booked" | "cancelled" | "completed"
     created_by_role: str  # "patient" | "staff"
     created_at: _DT
+    # Iter 2: free-text reason (required on create, 1-300 chars; enforced at the schema layer)
+    # and doctor_note (required when completing, enforced in the complete endpoint).
+    reason: str = Field(default="")
+    doctor_note: str | None = None
+
+
+class PatientProfile(SQLModel, table=True):
+    # year_of_birth lives on Patient (data pack 1); this holds only pack-2 additions.
+    patient_id: str = Field(foreign_key="patient.id", primary_key=True)
+    general_health: str
+    allergies: str
+
+
+class UrgentCase(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    patient_id: str = Field(foreign_key="patient.id", index=True)
+    appointment_id: int | None = Field(default=None, foreign_key="appointment.id", index=True)
+    reason_text: str
+    category: str
+    why: str
+    created_at: _DT = Field(index=True)
+    seen_at: _DT | None = Field(default=None, index=True)
