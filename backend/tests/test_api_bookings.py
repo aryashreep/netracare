@@ -28,6 +28,7 @@ def test_happy_path(client, seed, patient_token):
         "speciality": "Cataract",
         "visit_type": "new",
         "start_ts": "2026-11-04T10:00:00",
+        "reason": "Routine check",
     }
     resp = client.post("/appointments", json=body, headers=_auth(patient_token))
     assert resp.status_code == 201, resp.text
@@ -47,6 +48,7 @@ def test_second_patient_cannot_book_same_slot(client, seed, patient_token, other
         "speciality": "Cataract",
         "visit_type": "new",
         "start_ts": "2026-11-04T10:00:00",
+        "reason": "Routine check",
     }
     client.post("/appointments", json=body, headers=_auth(patient_token))
     body["speciality"] = "Cataract"
@@ -61,6 +63,7 @@ def test_cancel_and_rebook(client, seed, patient_token, other_patient_token):
         "speciality": "Cataract",
         "visit_type": "new",
         "start_ts": "2026-11-04T10:00:00",
+        "reason": "Routine check",
     }
     appt = client.post("/appointments", json=body, headers=_auth(patient_token)).json()
 

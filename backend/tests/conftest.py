@@ -25,6 +25,19 @@ from app.db import get_session  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models import Appointment, Doctor, Holiday, Patient, WeeklyScheduleEntry  # noqa: E402
 
+
+# Stub out the red-flag LLM call for every test by default. Tests that want
+# to exercise flag=true override this fixture explicitly.
+@pytest.fixture(autouse=True)
+def _mock_red_flag(monkeypatch: pytest.MonkeyPatch) -> None:
+    from app.llm.red_flag import RedFlagResult
+    from app.routers import appointments as appointments_router
+
+    def _ok(_reason: str) -> RedFlagResult:
+        return RedFlagResult(red_flag=False, category=None, why="stub: no flag")
+
+    monkeypatch.setattr(appointments_router, "check_red_flags", _ok)
+
 FIXED_NOW = datetime(2026, 11, 2, 10, 0, 0)  # Monday
 
 
