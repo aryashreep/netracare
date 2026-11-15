@@ -457,7 +457,83 @@ Full execution model, task-card format, and failure-mode playbook:
 
 ---
 
-## 10. Running it
+## 10. Context engineering
+
+An explicit named discipline, not a vibe. From Iteration 2 onward,
+every LLM call in NetraCare — red-flag check, Fact of the Day, doctor
+summary, Iteration-3's RAG, Iteration-4's agent — budgets, caches, and
+fails closed. The pattern is pinned here before Iter 2 starts so each
+chain isn't invented from scratch.
+
+### The three context layers (ordered stable → volatile)
+
+| Layer | Volatility | Lives in | Load cadence |
+|---|---|---|---|
+| **1. Immutable** | Only via MAJOR constitution amendments | `.specify/memory/constitution.md` | Once per session |
+| **2. Stable** | Changes between iterations | `docs/conventions.md`, `.claude/agents/*.md`, `docs/swarm-workflow.md` | At the start of each task |
+| **3. Volatile** | Changes within an iteration | `specs/00N-<slug>/`, `docs/swarm/task-log.md`, open PRs | When a task card names them |
+
+Shims (`CLAUDE.md`, `AGENTS.md`, `.cursor/rules/`) are pointers to
+Layer 2. They MUST NOT duplicate its content — drift would silently
+make different AI tools disagree.
+
+### Prompt structure for every LLM chain
+
+Every chain in `backend/app/llm/` splits its prompt into a **cacheable
+stable prefix** and a **volatile per-request suffix**. The prefix hits
+Anthropic's prompt cache; the suffix is the only thing that changes
+per call.
+
+```mermaid
+flowchart LR
+    subgraph Prefix["Cacheable prefix — stable across requests"]
+        direction TB
+        Sys["System prompt<br/>role + tone"]
+        Const["Constitution excerpts<br/>(Principle II: no advice,<br/>Principle III: no PHI)"]
+        Codes["Reason-code dictionary<br/>(the 17 canonical codes)"]
+        Shots["Few-shot examples"]
+    end
+
+    subgraph Suffix["Per-request suffix — the only thing that changes"]
+        direction TB
+        Reason["Appointment reason<br/>OR patient profile<br/>OR today's question"]
+    end
+
+    Prefix --> LLM["Anthropic Claude<br/>(cache hit on prefix)"]
+    Suffix --> LLM
+    LLM --> Out["Structured output<br/>{red_flag, category, why}<br/>OR summary<br/>OR fact"]
+
+    classDef cache fill:#e2f1f2,stroke:#0d6e7a;
+    classDef vol fill:#fdecea,stroke:#b42318;
+    class Sys,Const,Codes,Shots cache;
+    class Reason vol;
+```
+
+**Rule:** no PHI in the cacheable prefix, ever. Patient-specific data
+(mobile, name, profile, notes, reason) stays in the volatile suffix,
+otherwise one patient's cache could taint another's inference.
+
+### Iteration 2+ targets (measured in `specs/002-.../research.md`)
+
+| Measure | Target |
+|---|---|
+| Red-flag chain cache hit rate | ≥ 70% |
+| Doctor-summary chain cache hit rate | ≥ 90% |
+| Red-flag input tokens (p95) | ≤ 2,000 |
+| Doctor-summary input tokens (p95) | ≤ 4,000 |
+| Fact-of-the-Day input tokens (p95) | ≤ 3,000 |
+| PHI in cacheable prefix | 0 |
+| Behavior on budget overrun | Fail closed — same refusal path as a timeout |
+
+The Architect records the per-chain plan in `research.md` before the
+Backend Agent implements. The Security Agent audits the prefix for
+PHI. The QA Agent asserts the token count stays under the ceiling.
+
+Full discipline reference: `docs/conventions.md` §10.
+
+---
+
+## 11. Running it
 
 ### Prerequisites
 
@@ -526,7 +602,7 @@ CLINIC_NOW=2026-11-02T10:00:00 docker compose exec backend pytest tests/test_rul
 
 ---
 
-## 11. Success metrics across the 6 iterations
+## 12. Success metrics across the 6 iterations
 
 The brief §09 lists five hard targets. Each is earned by one iteration:
 
@@ -540,7 +616,7 @@ The brief §09 lists five hard targets. Each is earned by one iteration:
 
 ---
 
-## 12. Repository structure (high level)
+## 13. Repository structure (high level)
 
 ```
 .
@@ -584,7 +660,7 @@ Files under `CODEOWNERS` (constitution, specs, `rules.py`, `slots.py`,
 
 ---
 
-## 13. Credits and scope
+## 14. Credits and scope
 
 - Course: *Agentic AI* capstone.
 - Built in public — see the author's LinkedIn for the ongoing writeup.
