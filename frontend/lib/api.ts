@@ -2,9 +2,13 @@ import { getSession } from "./session";
 import type {
   Appointment,
   Doctor,
+  DoctorSummary,
+  FactResponse,
+  RedFlagInfo,
   Refusal,
   Session as SessionT,
   SlotsResponse,
+  UrgentCase,
   VisitType,
 } from "./types";
 
@@ -14,10 +18,19 @@ const BASE =
 export class ApiError extends Error {
   status: number;
   code?: string;
-  constructor(status: number, message: string, code?: string) {
+  // When a booking is refused by the rules AFTER the red-flag chain fired,
+  // the server attaches red_flag so the UI still renders the emergency panel.
+  redFlag?: RedFlagInfo;
+  constructor(
+    status: number,
+    message: string,
+    code?: string,
+    redFlag?: RedFlagInfo,
+  ) {
     super(message);
     this.status = status;
     this.code = code;
+    this.redFlag = redFlag;
   }
 }
 
@@ -43,7 +56,7 @@ async function request<T>(
     const r = body as Refusal;
     const message =
       r.message || (body as { detail?: string }).detail || resp.statusText;
-    throw new ApiError(resp.status, message, r.code);
+    throw new ApiError(resp.status, message, r.code, r.red_flag);
   }
   return (await resp.json()) as T;
 }
@@ -105,6 +118,7 @@ export function createAppointment(
     speciality: string;
     visit_type: VisitType;
     start_ts: string;
+    reason: string;
     patient_id?: string;
   },
 ): Promise<Appointment> {
@@ -122,4 +136,46 @@ export function cancelAppointment(id: number): Promise<{ id: number; status: str
   return request<{ id: number; status: string }>(`/appointments/${id}/cancel`, {
     method: "POST",
   });
+}
+
+// Iter 2: complete visit with a required note.
+export function completeAppointment(
+  id: number,
+  doctor_note: string,
+): Promise<{ id: number; status: string }> {
+  return request<{ id: number; status: string }>(
+    `/appointments/${id}/complete`,
+    {
+      method: "POST",
+      body: JSON.stringify({ doctor_note }),
+    },
+  );
+}
+
+// Iter 2: Fact of the Day
+export function getFactOfTheDay(previous?: string): Promise<FactResponse> {
+  const qs = previous ? `?previous=${encodeURIComponent(previous)}` : "";
+  return request<FactResponse>(`/fact-of-the-day${qs}`, {}, false);
+}
+
+// Iter 2: Urgent cases (staff-only on server)
+export function listUrgentCases(
+  includeSeen = false,
+): Promise<{ cases: UrgentCase[] }> {
+  const qs = includeSeen ? "?include_seen=true" : "";
+  return request<{ cases: UrgentCase[] }>(`/urgent-cases${qs}`);
+}
+
+export function markUrgentSeen(
+  id: number,
+): Promise<{ id: number; seen_at: string }> {
+  return request<{ id: number; seen_at: string }>(
+    `/urgent-cases/${id}/seen`,
+    { method: "POST" },
+  );
+}
+
+// Iter 2: Doctor summary (doctor-only on server)
+export function getDoctorSummary(patientId: string): Promise<DoctorSummary> {
+  return request<DoctorSummary>(`/doctor/patients/${patientId}/summary`);
 }
