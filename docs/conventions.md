@@ -33,6 +33,10 @@ The `RuleError.code` field uses these exact strings. Do not rename.
 | `INSIDE_2_HOURS` | Patient cancel/reschedule less than 2 hours before — goes to Staff |
 | `NOT_YOUR_APPOINTMENT` | Patient acting on someone else's appointment |
 | `NOT_ACTIVE` | Appointment is already cancelled or completed |
+| `REASON_REQUIRED` | Booking submitted without an appointment reason (Iter 2) |
+| `REASON_TOO_LONG` | Appointment reason exceeds 300 characters (Iter 2) |
+| `NOTE_REQUIRED` | Doctor marked a visit completed without a note (Iter 2) |
+| `RED_FLAG_CHECK_UNAVAILABLE` | Red-flag LLM check could not run; booking refused fail-closed (Iter 2) |
 
 ## 3. Data model vocabulary
 
