@@ -1,7 +1,10 @@
 """
-Canonical refusal contract. The 17 reason codes below come from the data pack README
-(docs/conventions.md §2) and are frozen by the constitution — renaming any of them is a
-MAJOR constitution amendment.
+Canonical refusal contract. The 21 reason codes below are listed in
+docs/conventions.md §2 and are frozen by the constitution — renaming any
+of them is a MAJOR constitution amendment.
+
+Iter 1 shipped 17 codes. Iter 2 adds four (REASON_REQUIRED, REASON_TOO_LONG,
+NOTE_REQUIRED, RED_FLAG_CHECK_UNAVAILABLE).
 """
 
 
@@ -34,8 +37,26 @@ REASON_MESSAGES: dict[str, str] = {
     ),
     "NOT_YOUR_APPOINTMENT": "That appointment belongs to another patient.",
     "NOT_ACTIVE": "That appointment is already cancelled or completed.",
+    # --- Iter 2 ---
+    "REASON_REQUIRED": "Please tell us the reason for your visit.",
+    "REASON_TOO_LONG": "Reason is too long — please keep it under 300 characters.",
+    "NOTE_REQUIRED": "A note is required when marking a visit completed.",
+    "RED_FLAG_CHECK_UNAVAILABLE": (
+        "We couldn't check your reason just now. Please try again, or call the clinic if it's urgent."
+    ),
 }
 
 
-# A convenience list used by tests to confirm the contract stays at 17 entries.
+# Default is 409 Conflict (booking-rule refusals). Codes that correspond to
+# request-shape errors return 400; the LLM-infra failure returns 503.
+REASON_STATUS: dict[str, int] = {
+    "REASON_REQUIRED": 400,
+    "REASON_TOO_LONG": 400,
+    "NOTE_REQUIRED": 400,
+    "RED_FLAG_CHECK_UNAVAILABLE": 503,
+    "NOT_YOUR_APPOINTMENT": 403,
+}
+
+
+# A convenience list used by tests to confirm the contract stays at 21 entries.
 REASON_CODES: frozenset[str] = frozenset(REASON_MESSAGES.keys())
