@@ -9,7 +9,8 @@ import {
   listDoctors,
 } from "@/lib/api";
 import { getSession } from "@/lib/session";
-import type { Doctor, VisitType } from "@/lib/types";
+import type { Doctor, RedFlagInfo, VisitType } from "@/lib/types";
+import EmergencyPanel from "@/components/EmergencyPanel";
 
 function isoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
@@ -25,8 +26,10 @@ export default function StaffBookPage() {
   const [date, setDate] = useState(isoDate(new Date(Date.now() + 24 * 3600 * 1000)));
   const [slots, setSlots] = useState<string[]>([]);
   const [chosen, setChosen] = useState<string | null>(null);
+  const [reason, setReason] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [redFlag, setRedFlag] = useState<RedFlagInfo | null>(null);
 
   useEffect(() => {
     const s = getSession();
@@ -61,17 +64,24 @@ export default function StaffBookPage() {
     if (!chosen || !speciality || !patientId) return;
     setBusy(true);
     setErr(null);
+    setRedFlag(null);
     try {
-      await createAppointment({
+      const appt = await createAppointment({
         doctor_id: doctorId,
         speciality,
         visit_type: visitType,
         start_ts: chosen,
+        reason: reason.trim(),
         patient_id: patientId,
       });
+      if (appt.red_flag) {
+        setRedFlag(appt.red_flag);
+        return;
+      }
       router.push("/staff");
     } catch (e) {
       const ae = e as ApiError;
+      if (ae.redFlag) setRedFlag(ae.redFlag);
       setErr(`${ae.code ? ae.code + ": " : ""}${ae.message}`);
     } finally {
       setBusy(false);
@@ -180,15 +190,42 @@ export default function StaffBookPage() {
           </div>
         )}
 
+        <label className="block">
+          <span className="text-sm text-slate-600">
+            What is the reason for the visit?
+          </span>
+          <textarea
+            className="mt-1 w-full border border-slate-300 rounded px-3 py-2 min-h-[72px]"
+            value={reason}
+            onChange={(e) => setReason(e.target.value.slice(0, 300))}
+            maxLength={300}
+            placeholder="A short description in the patient's own words"
+          />
+          <span className="text-xs text-slate-500 block mt-1">
+            {reason.length}/300 characters · required
+          </span>
+        </label>
+
+        {redFlag && <EmergencyPanel info={redFlag} />}
+
         <button
           onClick={book}
-          disabled={!chosen || !patientId || busy}
+          disabled={!chosen || !patientId || !reason.trim() || busy}
           className="w-full bg-clinic-accent text-white rounded py-2 font-medium disabled:opacity-50"
         >
           {busy ? "Booking…" : "Confirm booking"}
         </button>
 
         {err && <p className="text-clinic-danger text-sm">{err}</p>}
+
+        {redFlag && (
+          <button
+            onClick={() => router.push("/staff")}
+            className="w-full border border-slate-300 rounded py-2 font-medium"
+          >
+            Go to staff view
+          </button>
+        )}
       </div>
     </main>
   );

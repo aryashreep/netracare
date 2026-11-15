@@ -9,7 +9,8 @@ import {
   listDoctors,
 } from "@/lib/api";
 import { getSession } from "@/lib/session";
-import type { Doctor, VisitType } from "@/lib/types";
+import type { Doctor, RedFlagInfo, VisitType } from "@/lib/types";
+import EmergencyPanel from "@/components/EmergencyPanel";
 
 function isoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
@@ -24,8 +25,10 @@ export default function BookPage() {
   const [date, setDate] = useState(isoDate(new Date(Date.now() + 24 * 3600 * 1000)));
   const [slots, setSlots] = useState<string[]>([]);
   const [chosen, setChosen] = useState<string | null>(null);
+  const [reason, setReason] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [redFlag, setRedFlag] = useState<RedFlagInfo | null>(null);
 
   useEffect(() => {
     const s = getSession();
@@ -60,16 +63,26 @@ export default function BookPage() {
     if (!chosen || !speciality) return;
     setBusy(true);
     setErr(null);
+    setRedFlag(null);
     try {
-      await createAppointment({
+      const appt = await createAppointment({
         doctor_id: doctorId,
         speciality,
         visit_type: visitType,
         start_ts: chosen,
+        reason: reason.trim(),
       });
+      // Happy path WITH red flag: still booked, but we must show the emergency
+      // panel before navigating. Hold the user on this screen; they go back to
+      // the home page on their own.
+      if (appt.red_flag) {
+        setRedFlag(appt.red_flag);
+        return;
+      }
       router.push("/patient");
     } catch (e) {
       const ae = e as ApiError;
+      if (ae.redFlag) setRedFlag(ae.redFlag);
       setErr(`${ae.code ? ae.code + ": " : ""}${ae.message}`);
     } finally {
       setBusy(false);
@@ -168,15 +181,42 @@ export default function BookPage() {
           </div>
         )}
 
+        <label className="block">
+          <span className="text-sm text-slate-600">
+            What is the reason for your visit?
+          </span>
+          <textarea
+            className="mt-1 w-full border border-slate-300 rounded px-3 py-2 min-h-[72px]"
+            value={reason}
+            onChange={(e) => setReason(e.target.value.slice(0, 300))}
+            maxLength={300}
+            placeholder="A short description (e.g. &quot;Blurred vision when reading, worse at night&quot;)"
+          />
+          <span className="text-xs text-slate-500 block mt-1">
+            {reason.length}/300 characters · required
+          </span>
+        </label>
+
+        {redFlag && <EmergencyPanel info={redFlag} />}
+
         <button
           onClick={book}
-          disabled={!chosen || busy}
+          disabled={!chosen || !reason.trim() || busy}
           className="w-full bg-clinic-accent text-white rounded py-2 font-medium disabled:opacity-50"
         >
           {busy ? "Booking…" : "Confirm booking"}
         </button>
 
         {err && <p className="text-clinic-danger text-sm">{err}</p>}
+
+        {redFlag && (
+          <button
+            onClick={() => router.push("/patient")}
+            className="w-full border border-slate-300 rounded py-2 font-medium"
+          >
+            I understand — back to my appointments
+          </button>
+        )}
       </div>
     </main>
   );

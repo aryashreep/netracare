@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ApiError, cancelAppointment, listMyAppointments } from "@/lib/api";
 import { clearSession, getSession } from "@/lib/session";
 import type { Appointment } from "@/lib/types";
+import FactCard from "@/components/FactCard";
 
 export default function PatientHome() {
   const router = useRouter();
@@ -64,6 +65,8 @@ export default function PatientHome() {
         </button>
       </div>
 
+      <FactCard />
+
       <div className="mt-6">
         <Link
           href="/patient/book"
@@ -84,12 +87,22 @@ export default function PatientHome() {
         {appts.map((a) => (
           <li key={a.id} className="px-4 py-3 flex items-center justify-between">
             <div>
-              <div className="font-medium">
+              <div className="font-medium flex items-center gap-2">
                 {a.doctor.name} — {a.speciality} ({a.visit_type.replace("_", " ")})
+                {a.urgent && (
+                  <span className="text-xs uppercase tracking-widest bg-red-100 text-clinic-danger border border-clinic-danger rounded px-1.5 py-0.5">
+                    Urgent
+                  </span>
+                )}
               </div>
               <div className="text-sm text-slate-500">
                 {new Date(a.start_ts).toLocaleString()} · {a.status}
               </div>
+              {a.reason && (
+                <div className="text-sm text-slate-600 mt-1 italic">
+                  &quot;{a.reason}&quot;
+                </div>
+              )}
             </div>
             {a.status === "booked" && (
               <button
