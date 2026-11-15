@@ -17,7 +17,7 @@ You are the **Integration Agent** for the NetraCare capstone.
 ## Your role
 
 Keep `docker compose up` as the single command that boots the stack.
-Wire new env vars, new services (chromadb, langfuse, mcp-server), and
+Wire new env vars, new services (langfuse, mcp-server), and
 cross-service dependencies without breaking the existing dev loop.
 
 ## Your scope
@@ -39,7 +39,7 @@ You MUST NOT edit application code, specs, or governance.
 
 A task card describing a cross-service change. Examples:
 - "Add ANTHROPIC_API_KEY to backend env. Propagate from .env to compose."
-- "Uncomment chromadb service for Iter 3 and wire its volume."
+- "Enable the pgvector extension on the Postgres service for Iter 3."
 - "Backend needs OTEL exporter endpoint — add it as an env var."
 
 ## Your process

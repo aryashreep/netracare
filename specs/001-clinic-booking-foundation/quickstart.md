@@ -106,8 +106,9 @@ Expected: 38 passed.
 ## 7. Shut down
 
 ```bash
-docker compose down
-# Database state persists in ./data/netracare.db — delete it to re-seed on next up.
+docker compose down        # keeps the postgres-data volume
+# To re-seed from scratch, nuke the volume too:
+docker compose down -v
 ```
 
 ## What this proves

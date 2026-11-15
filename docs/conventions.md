@@ -8,6 +8,7 @@ Single source of truth for how we build NetraCare. All AI-tool rule files (`CLAU
 - **Pure, time-injected logic.** Rule and slot functions take `now` as a parameter, never read the clock themselves. This lets the stretch-goal fixture (`CLINIC_NOW = 2026-11-02 10:00`) run all 38 cases deterministically.
 - **Server-side role enforcement.** Every router uses the `current_actor()` dependency and filters by `actor.id` where applicable. The frontend cannot be the gatekeeper — later iterations have an LLM agent calling the API directly.
 - **No LLM in Iter 1.** Reserve `.env` keys, but do not add LLM dependencies to `backend/pyproject.toml` until Iter 2.
+- **Postgres is the production store** (with the pgvector extension pre-staged for Iter 3). Connection string is `postgresql+psycopg://...`. Tests still use in-memory SQLite via SQLModel — the test engine is swappable because `rules.py` and `slots.py` are DB-agnostic. See §7.
 
 ## 2. Reason codes (canonical, from data pack README)
 
@@ -81,7 +82,9 @@ Edits to these files require explicit reviewer approval:
 - `docker compose up` is the canonical dev command. Never instruct a teammate to run `uvicorn` or `pnpm dev` directly.
 - Backend and frontend each have their own Dockerfile and `.dockerignore`.
 - Source code is volume-mounted for hot reload (dev); production builds use multi-stage.
-- SQLite file lives in `./data/netracare.db` (host-mounted volume).
+- **Postgres** service uses the `pgvector/pgvector:pg16` image. Data persists in the named volume `postgres-data`. Reset with `docker compose down -v`.
+- **pgvector is pre-staged.** The extension is dormant until `CREATE EXTENSION vector;` runs (Iter 3). No new service needed when RAG lands.
+- Test suites run against in-memory SQLite (`sqlite://`) via the pytest fixtures — fast, isolated, and prove the code is DB-agnostic.
 
 ## 8. Fixed clock for tests
 

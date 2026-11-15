@@ -18,7 +18,7 @@ cd backend
 uv venv --python 3.11 .venv
 source .venv/bin/activate
 uv pip install -e '.[dev]'
-DATABASE_URL=sqlite:///./netracare.db \
+DATABASE_URL=postgresql+psycopg://netracare:netracare@localhost:5432/netracare \
 DATA_DIR=../data/data-pack-01 \
 uvicorn app.main:app --reload
 ```
