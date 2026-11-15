@@ -62,6 +62,11 @@ A task card with a pointer to a completed spec. Example:
 - Role-scoped access on every endpoint (server-side), per Principle III.
 - New LLM features MUST be in `backend/app/llm/`, callable as pure
   functions with timeouts and fallbacks.
+- **Context engineering is your call.** Per `docs/conventions.md` §10,
+  every LLM chain you plan MUST declare its prompt/budget/caching
+  strategy in `research.md` before the Backend Agent implements. Name
+  the cacheable prefix, the volatile suffix, the token ceiling, and
+  the fail-closed behaviour.
 
 ## Your output (every turn)
 

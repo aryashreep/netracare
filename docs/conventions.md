@@ -91,7 +91,47 @@ Set `CLINIC_NOW=2026-11-02T10:00:00` in `.env` to run the stretch-goal `rule_tes
 
 API keys live in `.env` only. `.env.example` is committed; `.env` is git-ignored. Never paste keys into code, specs, or PR descriptions.
 
-## 10. Swarm conventions
+## 10. Context engineering
+
+An explicit named discipline, not a vibe. Every agent (human or AI) assembles its context from three ordered layers; shims point at layers, never duplicate them; handoffs compress state into structured artifacts instead of piping raw history.
+
+### The three layers
+
+| Layer | Volatility | Lives in | When to load |
+|---|---|---|---|
+| **1. Immutable** | Changes rarely (MAJOR constitution amendments) | `.specify/memory/constitution.md` | Once per session |
+| **2. Stable** | Changes between iterations | `docs/conventions.md` (this file), `.claude/agents/*.md`, `docs/swarm-workflow.md` | At the start of each task |
+| **3. Volatile** | Changes within an iteration | `specs/00N-<slug>/`, `docs/swarm/task-log.md`, open PRs | When a task card names them |
+
+Shims (`CLAUDE.md`, `AGENTS.md`, `.cursor/rules/netracare.mdc`) are pointers to Layer 2. They MUST NOT duplicate Layer 2 content — drift would silently make different AI tools disagree.
+
+### What we already do
+
+- Layered memory + pointer-only shims (above).
+- Scope-narrowed agent prompts (one file per agent, ≤ ~100 lines, write-scope declared in frontmatter).
+- Task cards as handoff artifacts (template in `docs/swarm-workflow.md` §3). Compressed structured state, not conversation dumps.
+- Stable public contracts (the 17 reason codes in §2; the five Core Principles) short-circuit re-derivation.
+- Spec-kit's `/speckit-analyze` loads *only* the FR/SC/task fields it needs from spec/plan/tasks — progressive disclosure, not whole-file dumps.
+- Fresh-slate per subagent invocation: every agent's prompt begins with "read first, every invocation" rather than assuming the parent session's state.
+
+### Iteration 2+ additions (named moves)
+
+When the first LLM features land, the following become mandatory and are measured in `specs/002-.../research.md`:
+
+- **Prompt caching (Anthropic).** Every LLM chain in `backend/app/llm/` splits its prompt into a cacheable stable prefix (system prompt + constitution extracts + reason-code dictionary + few-shot examples) and a volatile suffix (the user's reason text). Target: **≥ 70% cache hit rate on red-flag calls**, **≥ 90% on doctor-summary calls** once prompts stabilize.
+- **Context budget per LLM call.** The spec sets a hard token ceiling on each chain's input. Working defaults: **≤ 2,000 input tokens for red-flag**, **≤ 4,000 for doctor summary**, **≤ 3,000 for Fact of the Day**. Record the actual p50/p95 token counts per chain in `research.md`.
+- **Fail-closed on budget overrun.** If prompt assembly exceeds its ceiling, the LLM call is skipped and the backend returns the standard "We couldn't check your reason just now" refusal — the same path as a timeout. Never silently truncate medical context.
+- **Codebase index via `/graphify`.** Run at the start of each iteration; commit the index into the iteration's `specs/00N-.../` folder. Agents query it before writing non-trivial code, to find reusable modules instead of reinventing them.
+- **No PHI in cached prefixes.** The stable prefix must contain zero patient-specific data. Patient profile, appointment reason, and notes always live in the volatile suffix — otherwise one patient's cache could taint another's inference.
+
+### Who owns what
+
+- **Architect agent** records the per-chain prompt/budget/caching plan in `research.md` and `plan.md` before implementation starts.
+- **Backend agent** implements the split (cacheable prefix / volatile suffix) and surfaces the token counts in test output.
+- **Security agent** audits that no PHI is in the cacheable prefix.
+- **QA agent** adds a test per chain that asserts the input-token count stays under the ceiling.
+
+## 11. Swarm conventions
 
 From Iteration 2 onward, feature work is built by a **build-time agent swarm** — 9 specialist subagents coordinated by a human orchestrator. The full execution model is in `docs/swarm-workflow.md`.
 
