@@ -21,12 +21,15 @@ import pytest
 
 from app.llm.red_flag import RedFlagCheckError, check_red_flags
 
-_SAMPLES = (
-    Path(__file__).parent.parent.parent
+# In Docker the data is mounted at /app/data; locally it's sibling to backend/.
+_CANDIDATES = (
+    Path("/app/data/data-pack-02/reason_samples.csv"),
+    Path(__file__).resolve().parent.parent.parent
     / "data"
     / "data-pack-02"
-    / "reason_samples.csv"
+    / "reason_samples.csv",
 )
+_SAMPLES = next((p for p in _CANDIDATES if p.exists()), _CANDIDATES[0])
 
 
 def _load() -> list[dict[str, str]]:
