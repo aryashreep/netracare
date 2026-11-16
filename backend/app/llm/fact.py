@@ -10,7 +10,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.output_parsers import StrOutputParser
 
 from app.config import settings
-from app.llm.client import get_fast_model, log_call
+from app.llm.client import get_fast_model, log_call, system_content
 
 _PROMPT_PATH = Path(__file__).parent / "prompts" / "fact.md"
 _SYSTEM_PROMPT = _PROMPT_PATH.read_text(encoding="utf-8")
@@ -20,12 +20,8 @@ class FactUnavailable(Exception):
     """Any failure during Fact of the Day. The endpoint renders the fallback."""
 
 
-def _system_block() -> dict:
-    return {
-        "type": "text",
-        "text": _SYSTEM_PROMPT,
-        "cache_control": {"type": "ephemeral"},
-    }
+def _system_block() -> str | list[dict]:
+    return system_content(_SYSTEM_PROMPT)
 
 
 def generate_fact(previous: str | None = None) -> str:
@@ -40,7 +36,7 @@ def generate_fact(previous: str | None = None) -> str:
     )
 
     messages = [
-        SystemMessage(content=[_system_block()]),
+        SystemMessage(content=_system_block()),
         HumanMessage(content=user_text),
     ]
 

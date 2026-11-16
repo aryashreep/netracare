@@ -16,7 +16,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from pydantic import BaseModel, Field, ValidationError
 
 from app.config import settings
-from app.llm.client import get_fast_model, log_call
+from app.llm.client import get_fast_model, log_call, system_content
 
 RED_FLAG_CATEGORIES = (
     "sudden_vision_loss",
@@ -53,13 +53,10 @@ _SYSTEM_PROMPT = _PROMPT_PATH.read_text(encoding="utf-8")
 _MAX_REASON_CHARS = 300
 
 
-def _system_block() -> dict:
-    """Cacheable stable prefix. Anthropic cache-control marks it for the ephemeral cache."""
-    return {
-        "type": "text",
-        "text": _SYSTEM_PROMPT,
-        "cache_control": {"type": "ephemeral"},
-    }
+def _system_block() -> str | list[dict]:
+    """Stable prefix. On Anthropic, marked with cache_control for the
+    ephemeral cache. On Ollama, a plain string (no cache concept)."""
+    return system_content(_SYSTEM_PROMPT)
 
 
 def check_red_flags(reason: str) -> RedFlagResult:
@@ -83,9 +80,9 @@ def check_red_flags(reason: str) -> RedFlagResult:
 
     model = get_fast_model().with_structured_output(RedFlagResult, include_raw=True)
 
-    # Anthropic multi-part content: cacheable system block + volatile user suffix.
+    # Cacheable system prefix + volatile user suffix (see conventions §10).
     messages = [
-        SystemMessage(content=[_system_block()]),
+        SystemMessage(content=_system_block()),
         HumanMessage(content=f"Patient reason:\n{reason.strip()}"),
     ]
 
