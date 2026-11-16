@@ -6,11 +6,13 @@
 > appointments, and keeps staff in control — while never giving medical
 > advice.
 
-- **Status (this branch):** Iteration 1 — the booking foundation, with no
-  AI inside the app yet. Every clinic rule is enforced in the backend.
-- **Current tag:** —
-- **Next:** Iteration 2 adds the first LLM features (Fact of the Day,
-  red-flag check, doctor summaries).
+- **Status (this branch):** Iteration 2 — the first LLM features landed on
+  top of the Iteration 1 booking foundation. Every booking now runs a
+  red-flag safety check first; patients see a Fact of the Day; doctors
+  see an AI summary of the patient's recorded notes.
+- **Current tag:** `v1.0` (end of Iteration 1).
+- **Next:** Iteration 3 adds a patient chat with retrieval, citations,
+  and specialty routing.
 
 ---
 
@@ -23,8 +25,8 @@ rules engine.
 
 | # | Iteration | What it adds | Status |
 |---|---|---|---|
-| 1 | **Booking foundation** | FastAPI + Postgres (pgvector-ready) + Next.js. Three roles, 17-code rules engine, slot computation. **No AI.** | ✅ Built on this branch |
-| 2 | First LLM features | Fact of the Day, **red-flag check** on every booking, doctor summaries. LangChain basics. | 🔜 Planned |
+| 1 | **Booking foundation** | FastAPI + Postgres (pgvector-ready) + Next.js. Three roles, 17-code rules engine, slot computation. **No AI.** | ✅ Shipped (`v1.0`) |
+| 2 | **First LLM features** | Fact of the Day, **red-flag check** on every booking, doctor summaries. Four new refusal codes. Provider-swappable (Anthropic default, Ollama supported). | ✅ Built on this branch |
 | 3 | Patient chat (RAG) | Clinic knowledge base with hybrid search (BM25 + vector), citations, "I don't know", speciality routing. | 🔜 Planned |
 | 4 | Agent | LangGraph agent that books, cancels, reschedules using the Iter-1 API as tools. Doctor-leave handling. | 🔜 Planned |
 | 5 | Evals + observability | RAGAS, offline + online evals, LangSmith / Opik traces. | 🔜 Planned |
@@ -547,12 +549,36 @@ Full discipline reference: `docs/conventions.md` §10.
 ```bash
 # 1. Env file
 cp .env.example .env
-# ANTHROPIC_API_KEY is reserved for Iter 2+; leave blank for now.
+# Pick an LLM provider — see "Choosing an LLM provider" below.
 
 # 2. Install the pre-commit guards (one time)
 pip install pre-commit
 pre-commit install
 ```
+
+### Choosing an LLM provider (Iter 2+)
+
+Set `LLM_PROVIDER` in `.env`. Two providers are wired:
+
+- **`anthropic`** (default). Needs `ANTHROPIC_API_KEY`. Defaults to Claude
+  Haiku 4.5 for red-flag + Fact, Sonnet 4.6 for the doctor summary.
+  Enables the Anthropic prompt-cache target (conventions §10).
+- **`ollama`**. Local model via the host's Ollama daemon. No API key
+  needed. Defaults to `gpt-oss:20b` for both chains — qwen3:8b was faster
+  in spike testing but failed schema compliance on ~1 in 4 red-flag
+  calls. Raise the timeouts to cover cold model load:
+
+```bash
+LLM_PROVIDER=ollama
+LLM_TIMEOUT_FAST=30
+LLM_TIMEOUT_QUALITY=120
+```
+
+Then `ollama pull gpt-oss:20b` on the host once.
+
+Either way, the three chains behave identically from the app's point of
+view: red-flag fails closed, Fact and summary fall back to fixed text,
+and no booking is silently accepted when the LLM is unavailable.
 
 ### Start everything
 
@@ -571,19 +597,41 @@ Seed loaded: {'doctors': 5, 'schedule_entries': 72, 'holidays': ..., 'patients':
 
 ### Try it from the browser
 
+Iter 1 flows (still work unchanged):
+
 1. Open <http://localhost:3000>, pick **Patient**, sign in as
    `9000000001` / `Asha Verma`.
 2. Click **Book new appointment**, pick Dr. Rao, Cataract, a weekday
-   next week, pick a slot, confirm.
+   next week, pick a slot. **Fill in a reason** (required, ≤300 chars),
+   confirm.
 3. Try a refusal: book Dr. Rao on a **Thursday morning** → see
    `SURGERY_SESSION`.
 4. Sign out, sign in as **Staff**, see every appointment, cancel one
    that starts inside the next 2 hours.
 5. Sign in as **Doctor**, pick Dr. Rao, open the day of the booking,
-   click **Mark completed**.
+   click **Mark completed** → must enter a note to save.
 6. Sign back in as Asha and book a **Cataract follow-up**: with Dr. Rao
    it succeeds; with Dr. Iyer it fails with
    `FOLLOW_UP_DIFFERENT_DOCTOR`.
+
+Iter 2 flows (new):
+
+7. Patient home shows a **Fact of the Day** with the caveat *General
+   information, not medical advice*. Click **Refresh** for a new one.
+8. Book with a red-flag reason, e.g. `I suddenly cannot see from my
+   left eye`. The emergency panel appears before anything else.
+9. Sign in as **Staff** — an **Urgent cases** section is at the top of
+   the view. Click **Mark seen** to triage one.
+10. Book Lakshmi Nair (P03) for a Glaucoma follow-up with Dr. Iyer,
+    sign in as **Dr. Iyer**, open her from the schedule. The
+    `/doctor/patient/P03` page shows the AI summary labelled
+    *AI summary of recorded notes. Check the notes below.*, a profile
+    sidebar, and the full past notes.
+11. **Remove `ANTHROPIC_API_KEY` (or set `LLM_PROVIDER=ollama` without
+    pulling the model) and restart.** Fact of the Day shows its
+    fallback; the doctor summary says *Summary unavailable. See the
+    notes below.*; booking refuses with
+    `RED_FLAG_CHECK_UNAVAILABLE`.
 
 ### Run the backend tests
 
@@ -593,7 +641,19 @@ docker compose exec backend pytest -v
 #   cd backend && uv venv .venv && source .venv/bin/activate && uv pip install -e '.[dev]' && pytest -v
 ```
 
-Current baseline: **37 passed, 1 skipped (stretch)**.
+Current baseline: **81 passed, 1 skipped (Iter-1 stretch), 1 deselected
+(Iter-2 live LLM harness)**.
+
+### Live red-flag harness (stretch, needs a real provider)
+
+```bash
+# With ANTHROPIC_API_KEY set OR with Ollama running + LLM_PROVIDER=ollama.
+docker compose exec backend pytest -m live -v
+```
+
+Runs the 35-row sample set from `data/data-pack-02/reason_samples.csv`
+through the red-flag chain. Target: ≤ 2 missed red flags, ≤ 2 false
+positives.
 
 ### Fixed-clock harness (stretch)
 
