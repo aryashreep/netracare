@@ -11,6 +11,10 @@ dependencies = [
     "pydantic-settings>=2.6",
     "python-multipart>=0.0.12",
     "psycopg[binary]>=3.2",
+    "langchain>=0.3",
+    "langchain-core>=0.3",
+    "langchain-anthropic>=0.3",
+    "langchain-ollama>=0.2",
 ]
 
 [project.optional-dependencies]
@@ -30,3 +34,7 @@ select = ["E", "F", "I", "B", "UP", "SIM"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+markers = [
+    "live: tests that call a real LLM provider (skipped in default runs; opt in with -m live)",
+]
+addopts = "-m 'not live'"

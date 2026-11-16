@@ -36,8 +36,10 @@ def _book(session: Session, **overrides):
 # ---- Sanity: contract shape ----
 
 
-def test_17_canonical_codes_frozen():
-    assert len(REASON_CODES) == 17
+def test_canonical_codes_frozen():
+    # Iter 1 shipped 17; Iter 2 added 4 (REASON_REQUIRED, REASON_TOO_LONG,
+    # NOTE_REQUIRED, RED_FLAG_CHECK_UNAVAILABLE).
+    assert len(REASON_CODES) == 21
 
 
 # ---- Happy path ----

@@ -9,6 +9,10 @@ services:
       - ./data:/app/data
 
   frontend:
+    # The production image pins NODE_ENV=production for `pnpm start`; `pnpm dev`
+    # needs development to drive the PostCSS/Tailwind pipeline. Override here.
+    environment:
+      - NODE_ENV=development
     command: pnpm dev
     volumes:
       - ./frontend:/app

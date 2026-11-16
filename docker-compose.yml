@@ -34,6 +34,10 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    # Host-gateway lets the container reach a local Ollama (or any host
+    # process) via host.docker.internal on Colima and Docker Desktop.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - netracare
 
