@@ -1,14 +1,15 @@
 <!--
 Sync Impact Report
-Version: (none) → 1.0.0  (initial ratification)
-Modified principles: n/a — new document
-Added sections:
-  - Core Principles (5)
-  - Technology & Data Standards
-  - Development Workflow & Quality Gates
-  - Governance
+Version: 1.0.0 → 2.0.0  (governance reset)
+Modified principles:
+  - IV. Spec-Driven Development — removed CODEOWNERS / protected-files enforcement.
+    Governance now relies on PR review + CI instead of file-level ownership rules.
+Modified sections:
+  - Development Workflow & Quality Gates — short-lived feature branches off main,
+    mandatory PR review (1 approval, no self-approval), mandatory CI, release tags.
+  - Governance — amendment procedure no longer references pre-commit hook blocking.
 Removed sections: none
-Follow-up TODOs: none
+Follow-up TODOs: delete CODEOWNERS; remove protected-files pre-commit hook if present.
 -->
 
 # NetraCare Constitution
@@ -83,13 +84,10 @@ when scope is uncertain.
 
 - No code change without a corresponding spec change. Bug fixes with no behavioral change
   may skip the spec; everything else MUST update `specs/<NNN-slug>/spec.md` first.
-- The following files are protected (enforced by `CODEOWNERS` and pre-commit hooks). Edits
-  require explicit human review:
-  - `.specify/memory/constitution.md` (edit only via `/speckit-constitution`)
-  - `specs/**/spec.md` (edit only via `/speckit-specify`)
-  - `backend/app/rules.py`
-  - `backend/app/slots.py`
-  - `docs/conventions.md`
+- Sensitive files (`.specify/memory/constitution.md`, `specs/**/spec.md`,
+  `backend/app/rules.py`, `backend/app/slots.py`, `docs/conventions.md`) must only be
+  edited through the appropriate `/speckit-*` command or with explicit reviewer sign-off
+  in the PR. Enforcement is by PR review, not CODEOWNERS.
 - Pull requests MUST answer the template question "which spec does this change correspond
   to?" Reviewers reject PRs that skip ahead to `/speckit-implement` without preceding
   artifacts.
@@ -137,17 +135,22 @@ team.
 
 ## Development Workflow & Quality Gates
 
-- **Branches:** `main` is always demo-ready and holds the latest merged iteration.
-  `iteration-N` is the long-lived branch for each capstone iteration. Feature branches
-  (`feature/<slug>`) branch off the current iteration and merge back via PR.
-- **Tags:** `v1.0`, `v2.0`, ... on `main` after each iteration merge, so any iteration's
-  final state can be checked out at any time.
-- **Pull requests:** Use the template in `.github/pull_request_template.md`. Every PR
-  must link its originating spec and confirm that the Iter-1 §09 verification table (and
-  later each iteration's equivalent) still passes.
+- **Branches:** `main` is always demo-ready. All work happens on short-lived
+  `feature/<slug>` branches cut from `main` and merged back via PR. Long-lived
+  iteration branches are forbidden — iteration scope is tracked in `specs/` and tags,
+  not in branches.
+- **Pull requests:** No direct commits to `main`. Every PR requires at least one
+  approving review from someone other than the author (self-approval is forbidden).
+  CI (pytest + lint) MUST pass before merge. PR description references the originating
+  spec/task and includes a summary of test results. The template lives in
+  `.github/pull_request_template.md`.
+- **Tags:** At the end of each iteration, tag the merge commit on `main` as
+  `vN.0` (`v1.0`, `v2.0`, …) so any iteration's final state can be checked out.
+- **CI:** A GitHub Actions workflow runs `pytest` and lint on every PR to `main`.
+  Red CI blocks merge. The stretch-goal `rule_tests.csv` fixture runs against the
+  fixed clock.
 - **Verification:** For every iteration, the handout's "Done when" table is the
-  acceptance test. CI (when added) runs the stretch-goal `rule_tests.csv` fixture
-  against the fixed clock.
+  acceptance test.
 - **AI governance:** Every AI tool's rule file (`CLAUDE.md`, `AGENTS.md`,
   `.cursor/rules/`) MUST be a thin shim pointing to `docs/conventions.md`. Tool-specific
   rule drift is forbidden.
@@ -160,8 +163,7 @@ artifact MUST be corrected.
 
 **Amendment procedure.** Changes land through `/speckit-constitution` only. The command
 produces a Sync Impact Report, bumps the version, and updates the `Last Amended` date.
-Direct edits to this file are blocked by a pre-commit hook; bypassing the hook requires
-an explicit note in the PR description.
+Direct edits to this file require explicit reviewer sign-off in the PR.
 
 **Versioning policy.**
 - **MAJOR:** removing or redefining a non-negotiable principle, or removing a protected
@@ -175,4 +177,4 @@ five core principles. Any complexity beyond what the spec requires MUST be justi
 the PR description or rolled back. Runtime guidance for day-to-day development lives in
 `docs/conventions.md`.
 
-**Version**: 1.0.0 | **Ratified**: 2026-11-13 | **Last Amended**: 2026-11-13
+**Version**: 2.0.0 | **Ratified**: 2026-11-13 | **Last Amended**: 2026-11-18

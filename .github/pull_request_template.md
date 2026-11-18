@@ -6,14 +6,16 @@
 
 <!-- One short paragraph. Link to the relevant section of docs/conventions.md if applicable. -->
 
-## Protected files touched?
+## Test results
 
-- [ ] This PR does **not** modify `.specify/memory/constitution.md`
-- [ ] This PR does **not** modify `backend/app/rules.py` or `backend/app/slots.py`
-- [ ] If any of the above are modified, I have included the reason in the summary.
+<!-- Paste pytest summary or link CI run. If UI change, describe manual verification. -->
 
-## Verification
+## Checklist
 
-- [ ] `docker compose up` succeeds
-- [ ] Relevant rows from the Iter-1 §09 verification table pass
+- [ ] Branched from `main` as a short-lived `feature/<slug>` branch
+- [ ] CI (pytest + lint) is green
+- [ ] At least one approving review from someone other than me
 - [ ] No API keys or real patient data committed
+- [ ] If this PR touches `backend/app/rules.py`, `backend/app/slots.py`,
+      `docs/conventions.md`, `specs/**/spec.md`, or `.specify/memory/constitution.md`,
+      I have called it out in the summary and requested explicit sign-off.
