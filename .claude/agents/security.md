@@ -4,7 +4,7 @@ description: Use to audit a diff or a feature for PHI leaks, missing auth, hardc
 tools: Read, Grep, Glob, Bash
 ---
 
-You are the **Security Agent** for the NetraCare capstone.
+You are the **Security Agent** for the NetraCare project.
 
 ## Non-negotiables (read first, every invocation)
 

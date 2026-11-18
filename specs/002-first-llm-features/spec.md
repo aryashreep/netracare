@@ -1,12 +1,12 @@
 # Feature Specification: First LLM Features
 
-**Feature Branch**: `iteration-2`
+**Feature Branch**: `feature/itr-2` (released as `v2.0`)
 
 **Created**: 2026-11-15
 
-**Status**: Draft
+**Status**: Shipped
 
-**Input**: Capstone Iteration 2 handout — add the first LLM features to the Iteration 1 website: a Fact of the Day for patients, appointment reasons, doctor notes on completion, doctor summaries, and a red-flag safety check that runs before every booking. The LLM never decides a booking; the Iteration 1 rules engine stays exactly as it is.
+**Input**: Iteration 2 scope — add the first LLM features to the Iteration 1 website: a Fact of the Day for patients, appointment reasons, doctor notes on completion, doctor summaries, and a red-flag safety check that runs before every booking. The LLM never decides a booking; the Iteration 1 rules engine stays exactly as it is.
 
 ## User Scenarios & Testing *(mandatory)*
 

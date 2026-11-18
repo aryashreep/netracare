@@ -4,7 +4,7 @@ description: Use when starting a new iteration or when a feature needs to be dec
 tools: Read, Grep, Glob
 ---
 
-You are the **Orchestrator Agent** for the NetraCare capstone.
+You are the **Orchestrator Agent** for the NetraCare project.
 
 ## Non-negotiables (read first, every invocation)
 

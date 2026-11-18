@@ -65,16 +65,19 @@ Clarification helpers (use when scope is uncertain):
 
 ## 5. Branch & PR flow
 
-- `main` → always demo-ready; latest merged iteration.
-- `iteration-N` → long-lived branch per capstone iteration.
-- `feature/<slug>` → off the current iteration branch, PR'd back into it.
-- Tag `vN.0` on `main` after each iteration merge.
+- `main` → always demo-ready.
+- `feature/<slug>` → short-lived branch cut from `main` and PR'd back. No
+  long-lived iteration branches.
+- Tag `vN.0` on `main` at the end of each iteration (`v1.0`, `v2.0`, …).
+- No direct commits to `main`. Every PR requires one approving review from
+  someone other than the author, and CI (ruff + pytest) must be green.
+- Every PR must answer: **which spec file does this change correspond to?**
+  (See `.github/pull_request_template.md`.)
 
-Every PR must answer: **which spec file does this change correspond to?** (See `.github/pull_request_template.md`.)
+## 6. Sensitive files (reviewer sign-off required)
 
-## 6. Protected files (CODEOWNERS)
-
-Edits to these files require explicit reviewer approval:
+Edits to these files require explicit reviewer sign-off in the PR
+description (enforced by PR review, not CODEOWNERS):
 - `.specify/memory/constitution.md`
 - `specs/**/spec.md`
 - `backend/app/rules.py`

@@ -1,12 +1,12 @@
 # Feature Specification: Clinic Booking Foundation
 
-**Feature Branch**: `iteration-1`
+**Feature Branch**: `feature/itr-1` (released as `v1.0`)
 
 **Created**: 2026-11-13
 
-**Status**: Draft
+**Status**: Shipped
 
-**Input**: Capstone Iteration 1 handout — build the clinic website: three roles, an appointment booking system, and every clinic rule enforced in the backend. No AI features in this feature; it is the foundation that Iterations 2–6 extend.
+**Input**: Iteration 1 scope — build the clinic website: three roles, an appointment booking system, and every clinic rule enforced in the backend. No AI features in this feature; it is the foundation that Iterations 2–6 extend.
 
 ## User Scenarios & Testing *(mandatory)*
 

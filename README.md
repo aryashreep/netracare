@@ -1,16 +1,29 @@
 # NetraCare — AI front desk for an eye clinic
 
-> **Fictional clinic. Synthetic data only.** NetraCare is a six-iteration
-> Agentic-AI capstone building an AI-powered front desk: patients ask
-> questions, the system routes them to the right specialist, manages
-> appointments, and keeps staff in control — while never giving medical
-> advice.
+> **Fictional clinic. Synthetic data only.** NetraCare is an AI-powered
+> front desk: patients ask questions, the system routes them to the right
+> specialist, manages appointments, and keeps staff in control — while
+> never giving medical advice. Built in six focused iterations, each
+> landing behind the same safety invariants and a spec-driven workflow.
+
+## Highlights
+
+- **Safety is a backend invariant.** One rules engine (`backend/app/rules.py`)
+  is the sole authority on bookings. LLMs can flag reasons but can never
+  override a refusal, duplicate rules in the frontend, or give medical advice.
+- **Spec-driven.** Every feature starts with a spec (`specs/**/spec.md`)
+  via spec-kit — no code without a spec change.
+- **Governed by CI.** Ruff + pytest run on every PR to `main`; branch
+  protection requires an approving review and green checks before merge.
+- **Reproducible dev loop.** `docker compose up` is the single command.
+  Pure rule/slot modules accept `now` as input so a fixed clock replays
+  the 38-case rule harness identically on any machine.
 
 - **Status (this branch):** Iteration 2 — the first LLM features landed on
   top of the Iteration 1 booking foundation. Every booking now runs a
   red-flag safety check first; patients see a Fact of the Day; doctors
   see an AI summary of the patient's recorded notes.
-- **Current tag:** `v1.0` (end of Iteration 1).
+- **Released:** `v1.0` (Iteration 1), `v2.0` (Iteration 2).
 - **Next:** Iteration 3 adds a patient chat with retrieval, citations,
   and specialty routing.
 
@@ -49,10 +62,9 @@ flowchart LR
     class I2,I3,I4,I5,I6 todo;
 ```
 
-Project brief: see the four HTML handouts in the user's course folder
-(`NetraCare-Capstone-Brief.html` plus `Iteration-{1,2,3}.html`). The
-feature spec for the current iteration lives at
-`specs/001-clinic-booking-foundation/spec.md`.
+The feature spec for the current iteration lives at
+`specs/001-clinic-booking-foundation/spec.md`. Iteration briefs sit
+alongside it under `specs/`.
 
 ---
 
@@ -264,9 +276,9 @@ Full authoritative definitions: `docs/conventions.md` §2.
 
 ## 6. Role and auth model
 
-**Classroom-grade only.** The brief explicitly acknowledges this: no
-passwords, opaque bearer tokens in-memory, role-scoping server-side.
-Enough to prove safety properties for the capstone; **not production**.
+**Project-grade only.** No passwords, opaque bearer tokens in-memory,
+role-scoping server-side. Enough to prove the safety properties this
+project focuses on; **not production**.
 
 | Role | Signs in with | Can see / do |
 |---|---|---|
@@ -716,17 +728,17 @@ The brief §09 lists five hard targets. Each is earned by one iteration:
 └── specs/001-clinic-booking-foundation/   # this iteration's spec-kit artifacts
 ```
 
-Files under `CODEOWNERS` (constitution, specs, `rules.py`, `slots.py`,
-`conventions.md`) require explicit review on every PR.
+Sensitive files (constitution, specs, `rules.py`, `slots.py`,
+`conventions.md`) require explicit reviewer sign-off in the PR
+description. Enforced by PR review, not CODEOWNERS.
 
 ---
 
 ## 14. Credits and scope
 
-- Course: *Agentic AI* capstone.
 - Built in public — see the author's LinkedIn for the ongoing writeup.
 - All clinic details, doctors, patients, and data are synthetic. The
   clinic is fictional.
 
-License: **TBD** (likely MIT once the capstone finishes). Do not use the
-data pack for anything other than reproducing this course.
+License: **TBD** (likely MIT). The data pack is included only to
+reproduce this project's behavior end-to-end.

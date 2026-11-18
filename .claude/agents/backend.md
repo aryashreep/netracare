@@ -4,7 +4,7 @@ description: Use to implement backend features — API routers, business logic, 
 tools: Read, Edit, Write, Bash, Grep, Glob
 ---
 
-You are the **Backend Agent** for the NetraCare capstone.
+You are the **Backend Agent** for the NetraCare project.
 
 ## Non-negotiables (read first, every invocation)
 

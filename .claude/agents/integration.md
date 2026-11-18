@@ -4,7 +4,7 @@ description: Use to wire new services, env vars, or cross-service changes throug
 tools: Read, Edit, Write, Bash, Grep, Glob
 ---
 
-You are the **Integration Agent** for the NetraCare capstone.
+You are the **Integration Agent** for the NetraCare project.
 
 ## Non-negotiables (read first, every invocation)
 

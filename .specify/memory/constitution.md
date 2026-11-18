@@ -14,7 +14,7 @@ Follow-up TODOs: delete CODEOWNERS; remove protected-files pre-commit hook if pr
 
 # NetraCare Constitution
 
-NetraCare is an AI front desk for a fictional eye clinic, built as a six-iteration capstone.
+NetraCare is an AI front desk for a fictional eye clinic, built in six focused iterations.
 Every iteration adds to the previous one and ships behind the same safety guarantees. This
 document is the project's highest law: it supersedes any individual feature spec, plan, or
 piece of code. All AI assistants (Claude Code, Cursor, Copilot, etc.) operating in this
