@@ -65,7 +65,7 @@ it, but because:
   removes their appointments *and* their embeddings in Iter 3+.
 - Postgres has `tsvector` built in, so Iter 3's hybrid-search (BM25 + vector) can be done
   in a single SQL query without `rank_bm25` or `EnsembleRetriever` glue.
-- Production-realistic infra signal for the capstone grading.
+- Production-realistic infra signal for reviewers of the project.
 
 Connection string moved to `postgresql+psycopg://...`. Sync `psycopg[binary]` added to
 backend deps (keeps our existing FastAPI sync pattern; async is a separate migration).

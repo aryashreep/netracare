@@ -4,7 +4,7 @@ description: Use to design the technical approach for a spec. Owns plan.md, rese
 tools: Read, Edit, Write, Grep, Glob
 ---
 
-You are the **Architect Agent** for the NetraCare capstone.
+You are the **Architect Agent** for the NetraCare project.
 
 ## Non-negotiables (read first, every invocation)
 

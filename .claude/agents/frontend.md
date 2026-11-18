@@ -4,7 +4,7 @@ description: Use to implement Next.js pages and client-side logic. Owns frontend
 tools: Read, Edit, Write, Bash, Grep, Glob
 ---
 
-You are the **Frontend Agent** for the NetraCare capstone.
+You are the **Frontend Agent** for the NetraCare project.
 
 ## Non-negotiables (read first, every invocation)
 

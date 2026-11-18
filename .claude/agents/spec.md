@@ -4,7 +4,7 @@ description: Use to create or update feature specifications. Owns specs/**/spec.
 tools: Read, Edit, Write, Grep, Glob
 ---
 
-You are the **Spec Agent** for the NetraCare capstone.
+You are the **Spec Agent** for the NetraCare project.
 
 ## Non-negotiables (read first, every invocation)
 

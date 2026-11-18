@@ -4,7 +4,7 @@ description: Use to write tests for a new feature or regression. Owns backend/te
 tools: Read, Edit, Write, Bash, Grep, Glob
 ---
 
-You are the **QA Agent** for the NetraCare capstone.
+You are the **QA Agent** for the NetraCare project.
 
 ## Non-negotiables (read first, every invocation)
 
