@@ -74,7 +74,7 @@ def free_slots(
 
 
 def _overlaps(start: datetime, end: datetime, existing: list[Appointment]) -> bool:
-    for a in existing:
+    for a in existing:  # noqa: SIM110 — explicit loop kept for readability in sensitive module
         if a.start_ts < end and a.end_ts > start:
             return True
     return False

@@ -4,7 +4,7 @@ This is a thin shim. The source of truth for all project conventions is **`docs/
 
 ## Non-negotiable laws
 
-These are defined formally in `.specify/memory/constitution.md` and enforced by `CODEOWNERS` + pre-commit hooks. The short version:
+These are defined formally in `.specify/memory/constitution.md`. The short version:
 
 1. **The rules engine lives in the backend, in one place.** Never duplicate rules in the frontend.
 2. **The LLM never decides a booking.** It may flag a reason; `validate_booking` is the only authority.
@@ -25,13 +25,14 @@ All feature work follows spec-kit:
 
 **Do not skip to `/speckit-implement`.** If a change needs new behavior, update the spec first. Reviewers reject PRs that touch code without a corresponding spec change.
 
-## Protected files
+## PR governance
 
-Never edit these without the matching slash command:
-- `.specify/memory/constitution.md` → use `/speckit-constitution`
-- `specs/**/spec.md` → use `/speckit-specify`
-- `backend/app/rules.py` → requires reviewer approval (CODEOWNERS)
-- `backend/app/slots.py` → requires reviewer approval (CODEOWNERS)
+- No direct commits to `main`. All changes land through pull requests.
+- Short-lived `feature/<slug>` branches off `main`. No long-lived iteration branches.
+- Every PR requires at least one approval from another reviewer. Authors cannot approve their own PRs.
+- CI (pytest + lint) must pass before merging.
+- PR description must reference the originating spec/task and summarize test results.
+- At the end of each iteration, tag `main` with `vN.0`.
 
 ## Knowledge-graph discipline
 

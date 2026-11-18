@@ -9,11 +9,7 @@ Fact fallback, and urgent-case list + idempotent Mark seen.
 
 from __future__ import annotations
 
-from typing import Iterator
-
 import pytest
-from fastapi.testclient import TestClient
-from sqlmodel import Session
 
 from app.llm.red_flag import RedFlagCheckError, RedFlagResult
 
@@ -171,6 +167,7 @@ def test_red_flag_check_failure_refuses_booking(client, seed, patient_token, mon
 
 def test_complete_requires_a_doctor_note(client, session, seed, doctor_d1_token):
     from datetime import datetime
+
     from tests.conftest import make_appointment
 
     appt = make_appointment(
@@ -286,6 +283,7 @@ def test_summary_includes_profile_and_past_notes(
     client, session, seed, doctor_d1_token, monkeypatch
 ):
     from datetime import datetime
+
     from app.models import PatientProfile
     from app.routers import doctor_views as mod
     from tests.conftest import make_appointment

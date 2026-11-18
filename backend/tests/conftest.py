@@ -5,6 +5,8 @@ Shared fixtures. All tests run against an in-memory SQLite DB with a fixed clock
 
 from __future__ import annotations
 
+# Must be set before any app imports that use settings.
+import os
 from collections.abc import Iterator
 from datetime import date, datetime
 
@@ -12,9 +14,6 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session, SQLModel, create_engine
 from sqlmodel.pool import StaticPool
-
-# Must be set before any app imports that use settings.
-import os
 
 os.environ["DATABASE_URL"] = "sqlite://"
 os.environ["DATA_DIR"] = "/tmp/data-pack-01"  # tests don't invoke the loader

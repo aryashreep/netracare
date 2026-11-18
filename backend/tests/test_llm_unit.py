@@ -25,7 +25,6 @@ from app.llm.red_flag import (
 )
 from app.llm.summary import _format_user_block
 
-
 # ---- Safety constants ----
 
 
