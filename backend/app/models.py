@@ -1,5 +1,4 @@
 from datetime import date as _date
-from datetime import datetime
 from typing import Literal
 
 from pydantic import NaiveDatetime

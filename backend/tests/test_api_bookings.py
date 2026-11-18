@@ -79,8 +79,9 @@ def test_cancel_and_rebook(client, seed, patient_token, other_patient_token):
 
 def test_staff_can_cancel_inside_2h(client, session, seed, staff_token, patient_token):
     # Make a booking at 11:00 same day (1h from the fixed clock at 10:00).
-    from tests.conftest import make_appointment
     from datetime import datetime
+
+    from tests.conftest import make_appointment
 
     appt = make_appointment(
         session, start=datetime(2026, 11, 2, 11, 0), patient_id="P01", doctor_id="D1"

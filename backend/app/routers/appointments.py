@@ -153,7 +153,7 @@ def create_appointment(
         if red_flag_info is not None:
             exc.message = f"{exc.message}"  # unchanged; the handler reads code/message
             # Attach as a dynamic attribute for the exception handler to read.
-            setattr(exc, "red_flag", red_flag_info.model_dump())
+            exc.red_flag = red_flag_info.model_dump()
         raise
 
     appt = Appointment(

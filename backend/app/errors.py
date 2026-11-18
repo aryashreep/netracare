@@ -21,7 +21,9 @@ REASON_MESSAGES: dict[str, str] = {
     "BEYOND_30_DAYS": "Bookings are open up to 30 days ahead.",
     "CLINIC_CLOSED": "The clinic is closed on Sundays.",
     "HOLIDAY": "The clinic is closed on that date.",
-    "OUTSIDE_SESSION": "The clinic is closed at that time (lunch 1–2 PM, or before 9 AM / after 6 PM).",
+    "OUTSIDE_SESSION": (
+        "The clinic is closed at that time (lunch 1–2 PM, or before 9 AM / after 6 PM)."
+    ),
     "ENDS_AFTER_SESSION": "That appointment would end after the session closes.",
     "DOCTOR_OFF": "That doctor is not at the clinic in that session.",
     "SURGERY_SESSION": "That doctor is operating in that session, not seeing patients.",
@@ -42,7 +44,8 @@ REASON_MESSAGES: dict[str, str] = {
     "REASON_TOO_LONG": "Reason is too long — please keep it under 300 characters.",
     "NOTE_REQUIRED": "A note is required when marking a visit completed.",
     "RED_FLAG_CHECK_UNAVAILABLE": (
-        "We couldn't check your reason just now. Please try again, or call the clinic if it's urgent."
+        "We couldn't check your reason just now. "
+        "Please try again, or call the clinic if it's urgent."
     ),
 }
 

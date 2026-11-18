@@ -11,7 +11,6 @@ import pytest
 from sqlmodel import Session
 
 from app.errors import REASON_CODES, RuleError
-from app.models import Patient, WeeklyScheduleEntry
 from app.rules import validate_booking, validate_cancel, validate_complete
 from tests.conftest import FIXED_NOW, make_appointment
 
